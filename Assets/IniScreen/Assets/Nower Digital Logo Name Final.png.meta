@@ -1,0 +1,453 @@
+fileFormatVersion: 2
+guid: 38084a2ffb8a0ac479753dadc32b3903
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -5468043978299359041
+    second: Nower Digital Logo Name Final_0
+  - first:
+      213: -5879258069101435003
+    second: Nower Digital Logo Name Final_1
+  - first:
+      213: -7699820935634468163
+    second: Nower Digital Logo Name Final_2
+  - first:
+      213: -2219232085655472054
+    second: Nower Digital Logo Name Final_3
+  - first:
+      213: 2556570482652440466
+    second: Nower Digital Logo Name Final_4
+  - first:
+      213: -1134157282354976948
+    second: Nower Digital Logo Name Final_5
+  - first:
+      213: 2277594460334105068
+    second: Nower Digital Logo Name Final_6
+  - first:
+      213: 5618810669536985066
+    second: Nower Digital Logo Name Final_7
+  - first:
+      213: 8634839095362657348
+    second: Nower Digital Logo Name Final_8
+  - first:
+      213: 6740601642680454934
+    second: Nower Digital Logo Name Final_9
+  - first:
+      213: 4965947269088988223
+    second: Nower Digital Logo Name Final_10
+  - first:
+      213: 5335205354821484132
+    second: Nower Digital Logo Name Final_11
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: iPhone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Windows Store Apps
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Nower Digital Logo Name Final_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1
+        width: 58
+        height: 107
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb0c04109fa9d14b0800000000000000
+      internalID: -5468043978299359041
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Nower Digital Logo Name Final_1
+      rect:
+        serializedVersion: 2
+        x: 97
+        y: 0
+        width: 62
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5872c509feda86ea0800000000000000
+      internalID: -5879258069101435003
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Nower Digital Logo Name Final_2
+      rect:
+        serializedVersion: 2
+        x: 191
+        y: 1
+        width: 104
+        height: 107
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: db2446987adb42590800000000000000
+      internalID: -7699820935634468163
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Nower Digital Logo Name Final_3
+      rect:
+        serializedVersion: 2
+        x: 329
+        y: 1
+        width: 53
+        height: 107
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a483b541d24b331e0800000000000000
+      internalID: -2219232085655472054
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Nower Digital Logo Name Final_4
+      rect:
+        serializedVersion: 2
+        x: 418
+        y: 0
+        width: 57
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2976fb50f43ca7320800000000000000
+      internalID: 2556570482652440466
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Nower Digital Logo Name Final_5
+      rect:
+        serializedVersion: 2
+        x: 567
+        y: 0
+        width: 57
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c472fc1f5f9a240f0800000000000000
+      internalID: -1134157282354976948
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Nower Digital Logo Name Final_6
+      rect:
+        serializedVersion: 2
+        x: 663
+        y: 1
+        width: 16
+        height: 107
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ce1ac9e2814ab9f10800000000000000
+      internalID: 2277594460334105068
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Nower Digital Logo Name Final_7
+      rect:
+        serializedVersion: 2
+        x: 718
+        y: 0
+        width: 59
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aef3de1c8860afd40800000000000000
+      internalID: 5618810669536985066
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Nower Digital Logo Name Final_8
+      rect:
+        serializedVersion: 2
+        x: 813
+        y: 0
+        width: 16
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44c1fbb686c15d770800000000000000
+      internalID: 8634839095362657348
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Nower Digital Logo Name Final_9
+      rect:
+        serializedVersion: 2
+        x: 865
+        y: 0
+        width: 58
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 61f02641b7d6b8d50800000000000000
+      internalID: 6740601642680454934
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Nower Digital Logo Name Final_10
+      rect:
+        serializedVersion: 2
+        x: 943
+        y: 0
+        width: 74
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f3cce530bb69ae440800000000000000
+      internalID: 4965947269088988223
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Nower Digital Logo Name Final_11
+      rect:
+        serializedVersion: 2
+        x: 1051
+        y: 0
+        width: 52
+        height: 108
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 46e75e9c0057a0a40800000000000000
+      internalID: 5335205354821484132
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    nameFileIdTable:
+      Nower Digital Logo Name Final_0: -5468043978299359041
+      Nower Digital Logo Name Final_1: -5879258069101435003
+      Nower Digital Logo Name Final_10: 4965947269088988223
+      Nower Digital Logo Name Final_11: 5335205354821484132
+      Nower Digital Logo Name Final_2: -7699820935634468163
+      Nower Digital Logo Name Final_3: -2219232085655472054
+      Nower Digital Logo Name Final_4: 2556570482652440466
+      Nower Digital Logo Name Final_5: -1134157282354976948
+      Nower Digital Logo Name Final_6: 2277594460334105068
+      Nower Digital Logo Name Final_7: 5618810669536985066
+      Nower Digital Logo Name Final_8: 8634839095362657348
+      Nower Digital Logo Name Final_9: 6740601642680454934
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
