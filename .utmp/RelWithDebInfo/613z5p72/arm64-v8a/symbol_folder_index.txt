@@ -1,0 +1,1 @@
+C:\Users\Noah\Documents\Workspace Coding\Github\SchnapsKarten\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\build\intermediates\cxx\RelWithDebInfo\613z5p72\obj\arm64-v8a
