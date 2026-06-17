@@ -1,4 +1,3 @@
-// PlayerSetupManager.cs - Mit Prefab-Liste, Namen-Vorschlägen und persistenten Spielern
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -15,13 +14,13 @@ public class PlayerSetupManager : MonoBehaviour
 {
     [Header("UI")]
     public Transform playerContainer;
-    public List<GameObject> playerRowPrefabs = new List<GameObject>(); // Mehrere Prefabs
+    public List<GameObject> playerRowPrefabs = new List<GameObject>();
     public Button startGameButton;
     public Button backButton;
     public TextMeshProUGUI gameModeText;
-    
-    [Header("Namen-Vorschläge")]
-    public TextAsset playerNamesFile; // JSON-Datei mit Namen
+
+    [Header("Name Suggestions")]
+    public TextAsset playerNamesFile;
     
     private List<string> playerNames = new List<string>();
     private List<string> availableNames = new List<string>();
@@ -32,7 +31,7 @@ public class PlayerSetupManager : MonoBehaviour
     void Start()
     {
         LoadPlayerNames();
-        LoadSavedPlayers(); // Gespeicherte Spieler laden
+        LoadSavedPlayers();
         UpdateGameModeDisplay();
         RefreshUI();
         
@@ -77,7 +76,6 @@ public class PlayerSetupManager : MonoBehaviour
         }
     }
     
-    // Methode zum Löschen aller gespeicherten Spieler (optional für Debug/Reset)
     public void ClearSavedPlayers()
     {
         PlayerPrefs.DeleteKey(PLAYER_NAMES_KEY);
@@ -117,8 +115,7 @@ public class PlayerSetupManager : MonoBehaviour
     string GetRandomName()
     {
         if (availableNames.Count == 0) return "Spieler";
-        
-        // Verwende noch nicht verwendete Namen
+
         List<string> unusedNames = new List<string>();
         foreach (string name in availableNames)
         {
@@ -128,7 +125,6 @@ public class PlayerSetupManager : MonoBehaviour
             }
         }
         
-        // Wenn alle Namen verwendet, nimm einen zufälligen
         if (unusedNames.Count == 0)
         {
             return availableNames[UnityEngine.Random.Range(0, availableNames.Count)] + " " + (playerNames.Count + 1);
@@ -145,7 +141,6 @@ public class PlayerSetupManager : MonoBehaviour
             return null;
         }
         
-        // Zyklisch durch die Prefabs gehen
         GameObject prefab = playerRowPrefabs[currentPrefabIndex];
         currentPrefabIndex = (currentPrefabIndex + 1) % playerRowPrefabs.Count;
         return prefab;
@@ -153,25 +148,21 @@ public class PlayerSetupManager : MonoBehaviour
     
     void RefreshUI()
     {
-        // Alle vorhandenen Rows löschen
         foreach (Transform child in playerContainer)
         {
             Destroy(child.gameObject);
         }
-        
-        // Prefab-Index zurücksetzen für konsistentes Aussehen
+
         currentPrefabIndex = 0;
-        
-        // Rows für alle Spieler erstellen
+
         for (int i = 0; i < playerNames.Count; i++)
         {
-            CreatePlayerRow(i, playerNames[i], false); // Ausgefüllte Rows
+            CreatePlayerRow(i, playerNames[i], false);
         }
-        
-        // Eine leere Row am Ende hinzufügen mit Namensvorschlag
+
         string suggestedName = GetRandomName();
-        CreatePlayerRow(playerNames.Count, suggestedName, true); // Leere Row mit Vorschlag
-        
+        CreatePlayerRow(playerNames.Count, suggestedName, true);
+
         UpdateStartButton();
     }
     
@@ -181,8 +172,7 @@ public class PlayerSetupManager : MonoBehaviour
         if (prefab == null) return;
         
         GameObject newRow = Instantiate(prefab, playerContainer);
-        
-        // Sichere Komponenten-Suche
+
         TMP_InputField input = newRow.GetComponentInChildren<TMP_InputField>();
         if (input == null)
         {
@@ -190,11 +180,9 @@ public class PlayerSetupManager : MonoBehaviour
             return;
         }
         
-        // Flexible Button-Suche
         Button plusButton = null;
         Button minusButton = null;
-        
-        // Suche nach Buttons mit verschiedenen Namen
+
         Transform plusTransform = newRow.transform.Find("PlusButton");
         if (plusTransform == null) plusTransform = newRow.transform.Find("AddButton");
         if (plusTransform == null) plusTransform = newRow.transform.Find("Plus");
@@ -205,13 +193,11 @@ public class PlayerSetupManager : MonoBehaviour
         if (minusTransform == null) minusTransform = newRow.transform.Find("Minus");
         if (minusTransform == null) minusTransform = newRow.transform.Find("-");
         
-        // Fallback: Alle Buttons finden und nach Position sortieren
         if (plusTransform == null || minusTransform == null)
         {
             Button[] allButtons = newRow.GetComponentsInChildren<Button>();
             if (allButtons.Length >= 2)
             {
-                // Nimm die ersten zwei Buttons
                 plusButton = allButtons[0];
                 minusButton = allButtons[1];
                 Debug.LogWarning($"Button-Namen nicht standardisiert in {prefab.name}. Verwende erste zwei Buttons.");
@@ -234,17 +220,14 @@ public class PlayerSetupManager : MonoBehaviour
             return;
         }
         
-        // Input setzen
         input.text = playerName;
-        input.interactable = isEmpty; // Nur leere Rows sind editierbar
-        
+        input.interactable = isEmpty;
+
         if (isEmpty)
         {
-            // Leere Row: Nur Plus-Button
             plusButton.gameObject.SetActive(true);
             minusButton.gameObject.SetActive(false);
-            
-            // Placeholder-Stil für Vorschlag (sicher prüfen)
+
             if (input.placeholder != null && input.placeholder.GetComponent<TextMeshProUGUI>() != null)
             {
                 input.placeholder.GetComponent<TextMeshProUGUI>().text = "Name eingeben...";
@@ -255,12 +238,11 @@ public class PlayerSetupManager : MonoBehaviour
                 if (!string.IsNullOrEmpty(name))
                 {
                     playerNames.Add(name);
-                    SavePlayers(); // Speichern nach dem Hinzufügen
+                    SavePlayers();
                     RefreshUI();
                 }
             });
-            
-            // Enter-Taste Support
+
             input.onEndEdit.AddListener((value) => {
                 if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
                 {
@@ -268,7 +250,7 @@ public class PlayerSetupManager : MonoBehaviour
                     if (!string.IsNullOrEmpty(name))
                     {
                         playerNames.Add(name);
-                        SavePlayers(); // Speichern nach dem Hinzufügen
+                        SavePlayers();
                         RefreshUI();
                     }
                 }
@@ -276,13 +258,12 @@ public class PlayerSetupManager : MonoBehaviour
         }
         else
         {
-            // Ausgefüllte Row: Nur Minus-Button
             plusButton.gameObject.SetActive(false);
             minusButton.gameObject.SetActive(true);
-            
+
             minusButton.onClick.AddListener(() => {
                 playerNames.RemoveAt(index);
-                SavePlayers(); // Speichern nach dem Entfernen
+                SavePlayers();
                 RefreshUI();
             });
         }
@@ -327,7 +308,6 @@ public class PlayerSetupManager : MonoBehaviour
         NavigationSceneManager.instance.LoadScene("MainMenu");
     }
     
-    // Optional: Methode um einen Reset-Button im UI zu implementieren
     public void OnResetPlayersButtonClicked()
     {
         ClearSavedPlayers();

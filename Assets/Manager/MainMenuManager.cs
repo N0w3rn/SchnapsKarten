@@ -1,4 +1,3 @@
-// MainMenuManager.cs - Erweiterte Version für dein Hauptmenü
 using UnityEngine;
 using UnityEngine.UI;
 

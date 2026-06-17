@@ -1,4 +1,3 @@
-// CardData.cs - Erweitert
 using UnityEngine;
 
 [System.Serializable]

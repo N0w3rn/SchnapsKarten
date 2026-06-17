@@ -1,4 +1,3 @@
-// CardLoader.cs - Lädt Karten aus JSON
 using UnityEngine;
 using System.Collections.Generic;
 using System;
@@ -6,12 +5,12 @@ using System;
 [System.Serializable]
 public class CardDataJSON
 {
-    public string title = "";           // NEU: Titel
+    public string title = "";
     public string text;
-    public string type = "einfach";     // String statt Enum
+    public string type = "einfach";
     public bool hasImage = false;
     public string imageName = "";
-    public int duration = 0;            // NEU: Dauer für Regeln
+    public int duration = 0;
 }
 
 [System.Serializable]
@@ -56,14 +55,12 @@ public class CardLoader : MonoBehaviour
         foreach (CardDataJSON cardJSON in gameData.cards)
         {
             CardType type = ConvertToCardType(cardJSON.type);
-            
-            // Schließe "spezial_wop" und "spezial_pantomime" Karten aus
+
             if (type == CardType.spezial_WoP || type == CardType.spezial_Pantomime)
                 continue;
-            
+
             CardData card = new CardData(cardJSON.title, cardJSON.text, type, cardJSON.hasImage, true, cardJSON.duration, cardJSON.imageName);
-            
-            // Sprite aus Resources laden
+
             if (cardJSON.hasImage && !string.IsNullOrEmpty(cardJSON.imageName))
             {
                 card.cardImage = LoadSpriteFromResources(cardJSON.imageName);
@@ -88,8 +85,7 @@ public class CardLoader : MonoBehaviour
             if (type == CardType.spezial_WoP)
             {
                 CardData card = new CardData(cardJSON.title, cardJSON.text, type, cardJSON.hasImage, true, cardJSON.duration, cardJSON.imageName);
-                
-                // Sprite aus Resources laden
+
                 if (cardJSON.hasImage && !string.IsNullOrEmpty(cardJSON.imageName))
                 {
                     card.cardImage = LoadSpriteFromResources(cardJSON.imageName);
@@ -115,8 +111,7 @@ public class CardLoader : MonoBehaviour
             if (type == CardType.spezial_Pantomime)
             {
                 CardData card = new CardData(cardJSON.title, cardJSON.text, type, cardJSON.hasImage, true, cardJSON.duration, cardJSON.imageName);
-                
-                // Sprite aus Resources laden
+
                 if (cardJSON.hasImage && !string.IsNullOrEmpty(cardJSON.imageName))
                 {
                     card.cardImage = LoadSpriteFromResources(cardJSON.imageName);

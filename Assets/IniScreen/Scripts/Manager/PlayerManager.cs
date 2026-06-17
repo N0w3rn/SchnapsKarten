@@ -1,4 +1,3 @@
-// PlayerManager.cs - Singleton für Spieler-Management
 using UnityEngine;
 using System.Collections.Generic;
 

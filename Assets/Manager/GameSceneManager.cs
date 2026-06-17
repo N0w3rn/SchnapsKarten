@@ -1,4 +1,3 @@
-// GameSceneManager.cs - Mit Pantomime-Gruppen
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -8,37 +7,41 @@ public class GameSceneManager : MonoBehaviour
 {
     [Header("Card Loading")]
     public CardLoader cardLoader;
-    
+
     [Header("Player UI")]
     public TextMeshProUGUI currentPlayerText;
-    
+
     [Header("Card UI")]
     public Image cardBackground;
     public TextMeshProUGUI cardTitle;
     public TextMeshProUGUI cardText;
     public Image cardImage;
-    
+
     [Header("Navigation")]
     public Button backToMenuButton;
-    
+
     [Header("Game Settings")]
     [Range(20, 100)]
     public int minCardsPerRound = 30;
     [Range(20, 100)]
     public int maxCardsPerRound = 50;
 
+    [Header("Card Type Mix (share of round, 0-1)")]
+    [Range(0f, 0.5f)]
+    public float ruleCardShare = 0.05f;
+    [Range(0f, 0.5f)]
+    public float gameCardShare = 0.15f;
+    [Range(0f, 0.5f)]
+    public float specialCardShare = 0.32f;
+
     [Header("Group Rarity")]
     [Range(1, 8)]
-    public int maxWoPGroups = 5;
-    [Range(1, 6)] 
-    public int maxPantomimeGroups = 4;
+    public int maxWoPGroups = 6;
+    [Range(1, 6)]
+    public int maxPantomimeGroups = 5;
     [Range(4, 12)]
     public int minGapBetweenGroups = 6;
-    [Range(2, 40)]
-    public int maxRuleCards = 5;
-    [Range(6, 60)]
-    public int maxGameCards = 12;
-    
+
     private List<Player> players;
     private int currentPlayerIndex = 0;
     private List<CardData> shuffledDeck = new List<CardData>();
@@ -67,11 +70,11 @@ public class GameSceneManager : MonoBehaviour
         LoadCards();
         SetupUI();
         UpdateCurrentPlayer();
-        
+
         cardsPlayedThisRound = 0;
         gameBlocked = false;
         gameEnded = false;
-        
+
         DrawCard();
     }
 
@@ -81,121 +84,83 @@ public class GameSceneManager : MonoBehaviour
 
         cardLoader.LoadCardData();
 
-        var normalCards = cardLoader.GetAllCards();
-        var spezialWoPCards = cardLoader.GetSpezialWoPCards();
-        var spezialPantomimeCards = cardLoader.GetSpezialPantomimeCards();
+        var allCards = cardLoader.GetAllCards();
+        var specialWoPCards = cardLoader.GetSpezialWoPCards();
+        var specialPantomimeCards = cardLoader.GetSpezialPantomimeCards();
 
         var wopCards = new List<CardData>();
         var pantomimeCards = new List<CardData>();
-        var nonSpecialCards = new List<CardData>();
 
-        // Erstelle Kopien und trenne verschiedene Kartentypen
-        foreach (var card in normalCards)
+        foreach (var card in allCards)
         {
-            var copy = CreateCardCopy(card);
-
             if (card.cardType == CardType.WahrheitOderPflicht)
-                wopCards.Add(copy);
+                wopCards.Add(CreateCardCopy(card));
             else if (card.cardType == CardType.Pantomime)
-                pantomimeCards.Add(copy);
-            else
-                nonSpecialCards.Add(copy);
+                pantomimeCards.Add(CreateCardCopy(card));
         }
-        
-        // Mische alle Listen
+
         ShuffleList(wopCards);
         ShuffleList(pantomimeCards);
+
+        int requiredCards = targetCardsForRound + 4; // small buffer
+
+        // Card type counts scale with the round length instead of being fixed
+        // absolute numbers, so the mix stays consistent regardless of round length.
+        int ruleCount = Mathf.RoundToInt(requiredCards * ruleCardShare);
+        int gameCount = Mathf.RoundToInt(requiredCards * gameCardShare);
+        int specialCount = Mathf.RoundToInt(requiredCards * specialCardShare);
+        int easyCount = Mathf.Max(0, requiredCards - ruleCount - gameCount - specialCount);
+
+        var nonSpecialCards = new List<CardData>();
+        nonSpecialCards.AddRange(BuildCardTypeSet(allCards, CardType.Regel, ruleCount, allowDuplicates: false));
+        nonSpecialCards.AddRange(BuildCardTypeSet(allCards, CardType.Spiel, gameCount, allowDuplicates: false));
+        // Special cards are rare in the pool - duplicates are allowed so the target count can exceed supply.
+        nonSpecialCards.AddRange(BuildCardTypeSet(allCards, CardType.Spezial, specialCount, allowDuplicates: true));
+        nonSpecialCards.AddRange(BuildCardTypeSet(allCards, CardType.Einfach, easyCount, allowDuplicates: false));
         ShuffleList(nonSpecialCards);
 
-        // RULE CARDS LIMITATION
-        var ruleCards = new List<CardData>();
-        foreach (var card in nonSpecialCards)
-        {
-            if (card.cardType == CardType.Regel)
-                ruleCards.Add(card);
-        }
+        shuffledDeck = new List<CardData>(nonSpecialCards);
 
-        int targetRuleCount = Random.Range(maxRuleCards / 2, maxRuleCards + 1);
-        if (ruleCards.Count > targetRuleCount)
-        {
-            ShuffleList(ruleCards);
-            // Remove excess rule cards
-            for (int i = ruleCards.Count - 1; i >= targetRuleCount; i--)
-            {
-                nonSpecialCards.Remove(ruleCards[i]);
-            }
-        }
-
-        // GAME CARDS LIMITATION
-        var gameCards = new List<CardData>();
-        foreach (var card in nonSpecialCards)
-        {
-            if (card.cardType == CardType.Spiel)
-                gameCards.Add(card);
-        }
-
-        int targetGameCount = Random.Range(maxGameCards / 2, maxGameCards + 1);
-        if (gameCards.Count > targetGameCount)
-        {
-            ShuffleList(gameCards);
-            // Remove excess game cards
-            for (int i = gameCards.Count - 1; i >= targetGameCount; i--)
-            {
-                nonSpecialCards.Remove(gameCards[i]);
-            }
-        }
-        
-        int requiredCards = targetCardsForRound + 4; // +4 Puffer
-        
-        // EINFACHER ANSATZ: Erstelle das Deck step by step
-        shuffledDeck = new List<CardData>();
-        
-        // 1. Füge ALLE normalen Karten hinzu
-        shuffledDeck.AddRange(nonSpecialCards);
-        
-        // 2. VIEL EINFACHERE GRUPPEN-PLATZIERUNG
+        // Group placement: WoP and Pantomime cards are inserted as small clusters
+        // at randomized, spaced-out positions instead of being mixed in uniformly.
         List<int> wopPositions = new List<int>();
         List<int> pantomimePositions = new List<int>();
-        
-        // Berechne wie oft eine Gruppe in den ersten X Karten passen würde
+
         int usableRange = Mathf.Max(0, Mathf.Min(shuffledDeck.Count - 15, requiredCards));
-        int possibleWoPSlots = usableRange / (minGapBetweenGroups + 3); // +3 für Gruppengröße
-        int possiblePantomimeSlots = usableRange / (minGapBetweenGroups + 2); // +2 für Gruppengröße
-        
-        // ZUFÄLLIGE Anzahl von Gruppen (0 bis maximal möglich)
+        int possibleWoPSlots = usableRange / (minGapBetweenGroups + 3); // +3 for group size
+        int possiblePantomimeSlots = usableRange / (minGapBetweenGroups + 2); // +2 for group size
+
         int maxPossibleWoP = Mathf.Min(maxWoPGroups, wopCards.Count / 2, possibleWoPSlots);
         int maxPossiblePantomime = Mathf.Min(maxPantomimeGroups, pantomimeCards.Count, possiblePantomimeSlots);
 
-        // Gewichtete Zufälligkeit - bevorzugt höhere Zahlen
+        // Weighted randomness - leans towards the higher end of the possible range
         int actualWoPGroups = Random.Range(maxPossibleWoP / 2, maxPossibleWoP + 1);
         int actualPantomimeGroups = Random.Range(maxPossiblePantomime / 2, maxPossiblePantomime + 1);
 
-        // Erstelle WoP-Positionen
         for (int i = 0; i < actualWoPGroups; i++)
         {
             int minPos = 15 + i * (minGapBetweenGroups + 5);
             int maxPos = minPos + minGapBetweenGroups;
             maxPos = Mathf.Min(maxPos, usableRange);
-            
+
             if (minPos < maxPos)
             {
                 int pos = Random.Range(minPos, maxPos);
                 wopPositions.Add(pos);
             }
         }
-        
-        // Erstelle Pantomime-Positionen (versetzt zu WoP)
+
         for (int i = 0; i < actualPantomimeGroups; i++)
         {
             int minPos = 20 + i * (minGapBetweenGroups + 5);
             int maxPos = minPos + minGapBetweenGroups;
             maxPos = Mathf.Min(maxPos, usableRange);
-            
+
             if (minPos < maxPos)
             {
                 int pos = Random.Range(minPos, maxPos);
-                
-                // Prüfe Abstand zu WoP-Gruppen
+
+                // Keep distance from WoP groups so they don't overlap
                 bool tooClose = false;
                 foreach (int wopPos in wopPositions)
                 {
@@ -205,30 +170,28 @@ public class GameSceneManager : MonoBehaviour
                         break;
                     }
                 }
-                
+
                 if (!tooClose)
                     pantomimePositions.Add(pos);
             }
         }
-        
-        // MISCHE ALLE POSITIONEN ZUSAMMEN FÜR ECHTE ZUFÄLLIGKEIT!
+
+        // Combine and shuffle insertion order so groups don't always appear WoP-first
         List<(int pos, string type, int index)> allGroups = new List<(int, string, int)>();
-        
+
         for (int i = 0; i < wopPositions.Count; i++)
             allGroups.Add((wopPositions[i], "wop", i));
-        
+
         for (int i = 0; i < pantomimePositions.Count; i++)
             allGroups.Add((pantomimePositions[i], "pantomime", i));
-        
-        // Sortiere nach Position rückwärts für korrektes Einfügen
+
+        // Sort by position descending so inserting doesn't shift earlier positions
         allGroups.Sort((a, b) => b.pos.CompareTo(a.pos));
-        
-        // Füge alle Gruppen in zufälliger Reihenfolge ein
+
         foreach (var group in allGroups)
         {
             if (group.type == "wop")
             {
-                // Füge WoP-Gruppe ein
                 int wopCount = Mathf.Min(Random.Range(1, 3), wopCards.Count - group.index * 2);
                 for (int j = wopCount - 1; j >= 0; j--)
                 {
@@ -236,64 +199,54 @@ public class GameSceneManager : MonoBehaviour
                     if (cardIndex < wopCards.Count)
                         shuffledDeck.Insert(group.pos, wopCards[cardIndex]);
                 }
-                
-                // Spezial-WoP DAVOR (ZUFÄLLIGE Auswahl!)
-                if (spezialWoPCards.Count > 0)
-                    shuffledDeck.Insert(group.pos, CreateCardCopy(spezialWoPCards[Random.Range(0, spezialWoPCards.Count)]));
+
+                if (specialWoPCards.Count > 0)
+                    shuffledDeck.Insert(group.pos, CreateCardCopy(specialWoPCards[Random.Range(0, specialWoPCards.Count)]));
             }
             else // pantomime
             {
-                // Füge Pantomime-Gruppe ein
                 if (group.index < pantomimeCards.Count)
                     shuffledDeck.Insert(group.pos, pantomimeCards[group.index]);
-                
-                // Spezial-Pantomime DAVOR (ZUFÄLLIGE Auswahl!)
-                if (spezialPantomimeCards.Count > 0)
-                    shuffledDeck.Insert(group.pos, CreateCardCopy(spezialPantomimeCards[Random.Range(0, spezialPantomimeCards.Count)]));
+
+                if (specialPantomimeCards.Count > 0)
+                    shuffledDeck.Insert(group.pos, CreateCardCopy(specialPantomimeCards[Random.Range(0, specialPantomimeCards.Count)]));
             }
         }
-        
-        // 5. Prüfe finale Deck-Größe und fülle auf falls nötig
+
         ValidateFinalDeck();
     }
 
     void ValidateFinalDeck()
     {
-        int requiredCards = targetCardsForRound + 4; // +4 Puffer
+        int requiredCards = targetCardsForRound + 4; // small buffer
 
-        PadDeckWithNormalCards(requiredCards);
+        PadDeckWithEasyCards(requiredCards);
 
-        // Entferne Gruppen aus dem Endbereich (letzten 8 Karten)
+        // Remove groups from the last few cards so a round doesn't end mid-group
         RemoveGroupsFromEnd();
 
-        // RemoveGroupsFromEnd kann das Deck wieder unter die Zielgröße bringen - erneut auffüllen
-        PadDeckWithNormalCards(requiredCards);
+        // RemoveGroupsFromEnd can drop the deck below target again - pad once more
+        PadDeckWithEasyCards(requiredCards);
     }
 
-    void PadDeckWithNormalCards(int requiredCards)
+    void PadDeckWithEasyCards(int requiredCards)
     {
         if (shuffledDeck.Count >= requiredCards) return;
 
-        Debug.LogWarning($"Deck zu klein! Benötigt: {requiredCards}, Vorhanden: {shuffledDeck.Count}");
+        Debug.LogWarning($"Deck too small! Required: {requiredCards}, available: {shuffledDeck.Count}");
 
-        // Füge normale Karten hinzu falls verfügbar (OHNE LINQ)
-        var allCards = cardLoader.GetAllCards();
-        var normalCards = new List<CardData>();
-
-        foreach (var card in allCards)
+        // Only fill with "Einfach" cards - filling with any type would undo the
+        // fixed card type mix chosen in LoadCards().
+        var easyCards = new List<CardData>();
+        foreach (var card in cardLoader.GetAllCards())
         {
-            if (card.cardType != CardType.WahrheitOderPflicht &&
-                card.cardType != CardType.Pantomime &&
-                card.cardType != CardType.spezial_WoP &&
-                card.cardType != CardType.spezial_Pantomime)
-            {
-                normalCards.Add(card);
-            }
+            if (card.cardType == CardType.Einfach)
+                easyCards.Add(card);
         }
 
-        while (shuffledDeck.Count < requiredCards && normalCards.Count > 0)
+        while (shuffledDeck.Count < requiredCards && easyCards.Count > 0)
         {
-            var randomCard = normalCards[Random.Range(0, normalCards.Count)];
+            var randomCard = easyCards[Random.Range(0, easyCards.Count)];
             shuffledDeck.Add(CreateCardCopy(randomCard));
         }
     }
@@ -301,15 +254,14 @@ public class GameSceneManager : MonoBehaviour
     void RemoveGroupsFromEnd()
     {
         if (shuffledDeck.Count <= 8) return;
-        
+
         int safeZoneStart = shuffledDeck.Count - 8;
-        
-        // Rückwärts durchgehen und Gruppen-Karten entfernen
+
         for (int i = shuffledDeck.Count - 1; i >= safeZoneStart; i--)
         {
             var cardType = shuffledDeck[i].cardType;
-            
-            if (cardType == CardType.spezial_WoP || 
+
+            if (cardType == CardType.spezial_WoP ||
                 cardType == CardType.spezial_Pantomime ||
                 cardType == CardType.WahrheitOderPflicht ||
                 cardType == CardType.Pantomime)
@@ -317,6 +269,33 @@ public class GameSceneManager : MonoBehaviour
                 shuffledDeck.RemoveAt(i);
             }
         }
+    }
+
+    // Returns up to targetCount fresh copies of the given card type from sourceCards.
+    // If allowDuplicates is true and supply is short, existing copies get duplicated to reach targetCount.
+    List<CardData> BuildCardTypeSet(List<CardData> sourceCards, CardType type, int targetCount, bool allowDuplicates)
+    {
+        var matches = new List<CardData>();
+        foreach (var card in sourceCards)
+        {
+            if (card.cardType == type) matches.Add(CreateCardCopy(card));
+        }
+
+        ShuffleList(matches);
+
+        if (matches.Count > targetCount)
+        {
+            matches.RemoveRange(targetCount, matches.Count - targetCount);
+        }
+        else if (allowDuplicates)
+        {
+            while (matches.Count < targetCount && matches.Count > 0)
+            {
+                matches.Add(CreateCardCopy(matches[Random.Range(0, matches.Count)]));
+            }
+        }
+
+        return matches;
     }
 
     CardData CreateCardCopy(CardData original)
@@ -346,7 +325,7 @@ public class GameSceneManager : MonoBehaviour
         }
         currentCardIndex = 0;
     }
-    
+
     void SetupUI()
     {
         if (backToMenuButton != null)
@@ -355,32 +334,29 @@ public class GameSceneManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("BackToMenuButton nicht zugewiesen!");
+            Debug.LogWarning("BackToMenuButton not assigned!");
         }
     }
-    
+
     void Update()
     {
-        // Touch/Click Detection
         if (Input.GetMouseButtonDown(0) || (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began))
         {
             OnScreenTouch();
         }
     }
-    
+
     public void OnScreenTouch()
     {
-        // Check: Sind wir im End-Screen?
         if (gameEnded)
         {
             OnEndScreenTouch();
             return;
         }
 
-        // Wenn blockiert, nichts machen
         if (gameBlocked) return;
 
-        // Letzte Karte wurde bereits gezeigt - jetzt erst den End-Screen anzeigen
+        // The last card of the round was already shown - only now show the end screen
         if (isLastCardOfRound)
         {
             ShowEndScreen();
@@ -389,49 +365,51 @@ public class GameSceneManager : MonoBehaviour
             return;
         }
 
-        // Normale Karte: Nächster Spieler + neue Karte
         NextPlayer();
         DrawCard();
     }
-    
+
     void UpdateCurrentPlayer()
     {
         if (players.Count == 0) return;
-        
+
         Player currentPlayer = players[currentPlayerIndex];
         if (currentPlayerText != null)
         {
             currentPlayerText.text = $"{currentPlayer.name}";
         }
     }
-    
+
     void DrawCard()
     {
         CardData card = shuffledDeck[currentCardIndex];
         currentCardIndex++;
         if (currentCardIndex >= shuffledDeck.Count)
         {
-            ShuffleDeck(); // setzt currentCardIndex zurück auf 0
+            ShuffleDeck(); // resets currentCardIndex back to 0
         }
 
         cardsPlayedThisRound++;
 
-        currentPlayerText.color = Color.white;
+        if (currentPlayerText != null)
+        {
+            currentPlayerText.color = Color.white;
+            currentPlayerText.fontStyle = TMPro.FontStyles.Normal;
+            currentPlayerText.fontSize = 46;
+        }
         cardTitle.color = Color.white;
         cardText.color = Color.white;
-        currentPlayerText.fontStyle = TMPro.FontStyles.Normal;
-        currentPlayerText.fontSize = 46;
 
-        // Karte immer anzeigen - der End-Screen folgt erst beim nächsten Touch
+        // Always show the card - the end screen only follows on the next touch
         DisplayCard(card);
         isLastCardOfRound = cardsPlayedThisRound >= targetCardsForRound;
     }
-    
+
     void DisplayCard(CardData card)
     {
         string displayText = ReplacePlayerPlaceholders(card.cardText);
         string titleText = card.cardTitle;
-        
+
         if (cardBackground != null)
         {
             cardBackground.gameObject.SetActive(true);
@@ -440,11 +418,11 @@ public class GameSceneManager : MonoBehaviour
 
         if (card.cardType == CardType.WahrheitOderPflicht)
         {
-            currentPlayerText.color = Color.black;
+            if (currentPlayerText != null) currentPlayerText.color = Color.black;
             cardTitle.color = Color.black;
             cardText.color = Color.black;
         }
-        
+
         if (card.hasImage && card.cardImage != null)
         {
             if (cardText != null) cardText.gameObject.SetActive(false);
@@ -453,16 +431,19 @@ public class GameSceneManager : MonoBehaviour
                 cardImage.gameObject.SetActive(true);
                 cardImage.sprite = card.cardImage;
 
-                if(card.imageName == "wahrheit_oder_pflicht")
+                if (currentPlayerText != null)
                 {
-                    currentPlayerText.text = "";
+                    if (card.imageName == "wahrheit_oder_pflicht")
+                    {
+                        currentPlayerText.text = "";
+                    }
+                    else
+                    {
+                        currentPlayerText.color = Color.black;
+                        currentPlayerText.fontStyle = TMPro.FontStyles.Bold;
+                        currentPlayerText.fontSize = 50;
+                    }
                 }
-                else
-                {
-                    currentPlayerText.color = Color.black;
-                    currentPlayerText.fontStyle = TMPro.FontStyles.Bold;
-                    currentPlayerText.fontSize = 50;
-                } 
             }
         }
         else
@@ -476,14 +457,14 @@ public class GameSceneManager : MonoBehaviour
             if (cardImage != null) cardImage.gameObject.SetActive(false);
         }
     }
-    
+
     void HideCard()
     {
         if (cardBackground != null) cardBackground.gameObject.SetActive(false);
         if (cardText != null) cardText.gameObject.SetActive(false);
         if (cardImage != null) cardImage.gameObject.SetActive(false);
     }
-    
+
     string ReplacePlayerPlaceholders(string text)
     {
         text = text.Replace("{CURRENT_PLAYER}", players[currentPlayerIndex].name);
@@ -492,15 +473,15 @@ public class GameSceneManager : MonoBehaviour
         text = text.Replace("{PLAYER}", GetRandomPlayer().name);
         return text;
     }
-    
+
     Player GetRandomPlayer() => players[Random.Range(0, players.Count)];
-    
+
     Player GetNextPlayer()
     {
         int nextIndex = (currentPlayerIndex + 1) % players.Count;
         return players[nextIndex];
     }
-    
+
     Player GetRandomOtherPlayer()
     {
         if (players.Count <= 1) return players[0];
@@ -509,7 +490,7 @@ public class GameSceneManager : MonoBehaviour
         while (randomIndex == currentPlayerIndex);
         return players[randomIndex];
     }
-    
+
     Color GetCardColor(CardType type)
     {
         switch (type)
@@ -525,32 +506,32 @@ public class GameSceneManager : MonoBehaviour
             default: return Color.white;
         }
     }
-    
+
     void NextPlayer()
     {
         currentPlayerIndex = (currentPlayerIndex + 1) % players.Count;
         UpdateCurrentPlayer();
     }
-    
+
     void ShowEndScreen()
     {
-        currentPlayerText.gameObject.SetActive(false);
+        if (currentPlayerText != null) currentPlayerText.gameObject.SetActive(false);
         HideCard();
-        
+
         if (cardImage != null)
         {
             cardImage.gameObject.SetActive(true);
             cardImage.sprite = Resources.Load<Sprite>("CardImages/end_screen");
         }
     }
-    
+
     public void OnEndScreenTouch()
     {
         BackToMenu();
     }
-    
+
     public void BackToMenu()
-    {   
+    {
         NavigationSceneManager.instance.LoadScene("MainMenu");
     }
 }
