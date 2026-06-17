@@ -2406,6 +2406,82 @@
       "title": "SPIEL",
       "text": "Secret Dish: {CURRENT_PLAYER} musst essen, was die anderen dir geben (im Rahmen des Essens/Trinkens hier). Wer sich weigert, trinkt doppelt.",
       "type": "spiel"
+    },
+    {
+      "title": "Wurfglück",
+      "text": "{CURRENT_PLAYER}, Wirf {OTHER_PLAYER} und {OTHER_PLAYER} in den Ausschnitt! Schaffst du es nicht trinke so viele Schlucke wie Nippel im Raum sind, sonst verteile sie.",
+      "type": "einfach"
+    },
+    {
+      "title": "Verflochten",
+      "text": "{CURRENT_PLAYER}, lass dir von {OTHER_PLAYER} einen Zopf flechten.",
+      "type": "einfach"
+    },
+    {
+      "title": "Teste Dich",
+      "text": "{CURRENT_PLAYER} und {OTHER_PLAYER} stellt euch voreinender auf. Streckt euren kleinen Finger aus. Sie müssen sich berühren. Schafft ihr es nicht trinkt ihr.",
+      "type": "einfach"
+    },
+    {
+      "title": "Lang,länger...",
+      "text": "{CURRENT_PLAYER}, wer hat die längste Zunge? Liegst du richtig darfst du einen Shot verteilen.",
+      "type": "einfach"
+    },
+    {
+      "title": "Geständnis",
+      "text": "{CURRENT_PLAYER}, was wolltest du {OTHER_PLAYER} schon immer mal sagen, hast es dich aber nie getraut.",
+      "type": "einfach"
+    },
+    {
+      "title": "Komatibilitätstest",
+      "text": "{CURRENT_PLAYER} und {OTHER_PLAYER} auf drei nennt ihr gleichzeitig ein Wort. Stimmt es überein dürft ihr 5 Schlucke veteilen. Katrgorie: Sexstellungen.",
+      "type": "einfach"
+    },
+    {
+      "title": "Komatibilitätstest",
+      "text": "{CURRENT_PLAYER} und {OTHER_PLAYER} auf drei nennt ihr gleichzeitig ein Wort. Stimmt es überein dürft ihr 5 Schlucke veteilen. Katrgorie: Dass mag ich am liebsten.",
+      "type": "einfach"
+    },
+    {
+      "title": "Komatibilitätstest",
+      "text": "{CURRENT_PLAYER} und {OTHER_PLAYER} auf drei nennt ihr gleichzeitig ein Wort. Stimmt es überein dürft ihr 5 Schlucke veteilen. Katrgorie: Nervigste Person aus der Runde.",
+      "type": "einfach"
+    },
+    {
+      "title": "Komatibilitätstest",
+      "text": "{CURRENT_PLAYER} und {OTHER_PLAYER} auf drei nennt ihr gleichzeitig ein Wort. Stimmt es überein dürft ihr 5 Schlucke veteilen. Katrgorie: Pornokategorie.",
+      "type": "einfach"
+    },
+    {
+      "title": "Komatibilitätstest",
+      "text": "{CURRENT_PLAYER} und {OTHER_PLAYER} auf drei nennt ihr gleichzeitig ein Wort. Stimmt es überein dürft ihr 5 Schlucke veteilen. Katrgorie: Ich sehe was, was du nicht siehst und das ist...",
+      "type": "einfach"
+    },
+    {
+      "title": "Komatibilitätstest",
+      "text": "{CURRENT_PLAYER} und {OTHER_PLAYER} auf drei nennt ihr gleichzeitig ein Wort. Stimmt es überein dürft ihr 5 Schlucke veteilen. Katrgorie: Abends vor dem Schlafen gehen denke ich an...",
+      "type": "einfach"
+    },
+    {
+      "title": "Komatibilitätstest",
+      "text": "{CURRENT_PLAYER} und {OTHER_PLAYER} auf drei nennt ihr gleichzeitig ein Wort. Stimmt es überein dürft ihr 5 Schlucke veteilen. Katrgorie: Dass ist mir an meinem Partner am wichtigsten.",
+      "type": "einfach"
+    },
+    {
+      "title": "Komatibilitätstest",
+      "text": "{CURRENT_PLAYER} und {OTHER_PLAYER} auf drei nennt ihr gleichzeitig ein Wort. Stimmt es überein dürft ihr 5 Schlucke veteilen. Katrgorie: Darauf schaue ich als Erstes.",
+      "type": "einfach"
+    },
+    {
+      "title": "SPIEL",
+      "text": "Flaschendrehen! Stellt ein Shot-Glas in die Mitte.Die Flasche wird 5 mal gedreht. Jedes mal wenn die Flasche auf jemanden zeigt, kippt er Alkohol in das Glas. Die fünfte Person muss den Shot Exen! {CURRENT_PLAYER} du beginnst.",
+      "type": "spiel"
+    },
+    {
+      "title": "REGEL",
+      "text": "Alle müssen immer bevor sie eine Person ansprechen, diese Person anfauchen. ( 2 Runden, Verstoß= 2 Schlucke)",
+      "type": "regel",
+      "duration": 2
     }
   ]
 }
