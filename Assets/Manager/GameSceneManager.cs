@@ -58,7 +58,7 @@ public class GameSceneManager : MonoBehaviour
     private bool isLastCardOfRound = false;
     private GameModeEnum currentGameMode;
     private Image titleBackdrop;
-    private VerticalAlignmentOptions defaultTitleVerticalAlignment;
+    private TextAlignmentOptions defaultTitleAlignment;
     private bool capturedDefaultTitleAlignment = false;
 
     private class ActiveRule
@@ -411,6 +411,7 @@ public class GameSceneManager : MonoBehaviour
         }
         cardTitle.color = Color.white;
         cardTitle.text = "REGEL VORBEI";
+        cardTitle.alignment = defaultTitleAlignment;
     }
 
     void UpdateCurrentPlayer()
@@ -468,7 +469,7 @@ public class GameSceneManager : MonoBehaviour
 
         if (cardTitle != null && !capturedDefaultTitleAlignment)
         {
-            defaultTitleVerticalAlignment = cardTitle.verticalAlignment;
+            defaultTitleAlignment = cardTitle.alignment;
             capturedDefaultTitleAlignment = true;
         }
 
@@ -518,13 +519,13 @@ public class GameSceneManager : MonoBehaviour
                 {
                     cardTitle.text = players[currentPlayerIndex].name;
                     cardTitle.color = Color.black;
-                    cardTitle.verticalAlignment = VerticalAlignmentOptions.Top;
+                    cardTitle.alignment = TextAlignmentOptions.Top;
                     SetTitleBackdropVisible(true);
                 }
                 else
                 {
                     cardTitle.text = "";
-                    cardTitle.verticalAlignment = defaultTitleVerticalAlignment;
+                    cardTitle.alignment = defaultTitleAlignment;
                     SetTitleBackdropVisible(false);
                 }
             }
@@ -536,7 +537,7 @@ public class GameSceneManager : MonoBehaviour
                 cardText.gameObject.SetActive(true);
                 cardText.text = displayText;
                 cardTitle.text = titleText;
-                cardTitle.verticalAlignment = defaultTitleVerticalAlignment;
+                cardTitle.alignment = defaultTitleAlignment;
             }
             if (cardImage != null) cardImage.gameObject.SetActive(false);
             SetTitleBackdropVisible(false);
@@ -636,6 +637,7 @@ public class GameSceneManager : MonoBehaviour
         if (cardBackground != null) cardBackground.gameObject.SetActive(false);
         if (cardText != null) cardText.gameObject.SetActive(false);
         if (cardImage != null) cardImage.gameObject.SetActive(false);
+        if (cardTitle != null) cardTitle.text = "";
         SetTitleBackdropVisible(false);
     }
 
