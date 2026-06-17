@@ -1,4 +1,3 @@
-// OrientationManager.cs - Verwaltet Screen Orientation
 using UnityEngine;
 
 public class OrientationManager : MonoBehaviour
@@ -20,10 +19,8 @@ public class OrientationManager : MonoBehaviour
     
     private void Start()
     {
-        // Standard: Portrait für Menüs
         SetPortrait();
-        
-        // Event für Scene-Wechsel abonnieren
+
         if (NavigationSceneManager.instance != null)
         {
             NavigationSceneManager.instance.onSceneChange += OnSceneChanged;
@@ -40,8 +37,6 @@ public class OrientationManager : MonoBehaviour
     
     private void OnSceneChanged(string sceneName)
     {
-        
-        // Landscape nur für GameScene
         if (sceneName == "GameScene")
         {
             SetLandscape();

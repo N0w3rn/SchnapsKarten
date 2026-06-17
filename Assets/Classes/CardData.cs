@@ -1,4 +1,3 @@
-// CardData.cs - Erweitert
 using UnityEngine;
 
 [System.Serializable]
@@ -30,13 +29,9 @@ public class CardData
 public class Player
 {
     public string name;
-    public Vector2 position;
-    public bool isActive;
-    
+
     public Player(string playerName)
     {
         name = playerName;
-        isActive = false;
-        position = Vector2.zero;
     }
 }

@@ -7,26 +7,16 @@ public class InitialiseGame : MonoBehaviour
     private const string MASTERVOLUME_KEY = "masterVolume";
     private const float DEFAULT_VOLUME = 0.5f;
 
-    private bool isInitialisationComplete = false;
-
     void Start()
     {
         InitialiseSettings();
-    }
-
-    private void Update()
-    {
-        if (isInitialisationComplete)
-        {
-            Invoke("LoadScene", 1.2f);
-        }
     }
 
     void InitialiseSettings()
     {
         InitialiseVolume();
         PlayerPrefs.Save();
-        isInitialisationComplete = true;
+        Invoke(nameof(LoadScene), 1.2f);
     }
 
     void LoadScene()
