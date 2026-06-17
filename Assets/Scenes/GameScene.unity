@@ -570,9 +570,9 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 352883931}
-  - {fileID: 1568729510}
   - {fileID: 1371070155}
   - {fileID: 2093950433}
+  - {fileID: 1568729510}
   - {fileID: 85052835}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -797,7 +797,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 7.9682, y: 237}
+  m_AnchoredPosition: {x: 5.1477, y: 245}
   m_SizeDelta: {x: 1046.6, y: 218.0625}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1568729511
@@ -855,7 +855,7 @@ MonoBehaviour:
   m_fontSizeMax: 72
   m_fontStyle: 1
   m_HorizontalAlignment: 2
-  m_VerticalAlignment: 1024
+  m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_characterHorizontalScale: 1
@@ -953,12 +953,13 @@ MonoBehaviour:
   backToMenuButton: {fileID: 85052836}
   minCardsPerRound: 60
   maxCardsPerRound: 73
+  ruleCardShare: 0.05
+  gameCardShare: 0.15
+  specialCardShare: 0.32
   maxWoPGroups: 3
   maxPantomimeGroups: 4
   minGapBetweenGroups: 6
-  maxRuleCards: 10
-  maxGameCards: 12
-  maxNormalCards: 20
+  ruleDurationRounds: 3
 --- !u!1 &2093950432
 GameObject:
   m_ObjectHideFlags: 0

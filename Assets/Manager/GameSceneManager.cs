@@ -57,11 +57,12 @@ public class GameSceneManager : MonoBehaviour
     private bool gameEnded = false;
     private bool isLastCardOfRound = false;
     private GameModeEnum currentGameMode;
+    private Image titleBackdrop;
 
     private class ActiveRule
     {
         public string text;
-        public int roundsRemaining;
+        public int turnsRemaining;
     }
 
     // Multiple rules can be active at once - each tracked with its own countdown.
@@ -398,6 +399,7 @@ public class GameSceneManager : MonoBehaviour
             cardBackground.color = new Color(0.6f, 0.6f, 0.6f);
         }
         if (cardImage != null) cardImage.gameObject.SetActive(false);
+        SetTitleBackdropVisible(false);
 
         if (cardText != null)
         {
@@ -433,10 +435,13 @@ public class GameSceneManager : MonoBehaviour
 
         if (card.cardType == CardType.Regel)
         {
+            int duration = card.duration > 0 ? card.duration : ruleDurationRounds;
+            // +1 so the "rule over" announcement appears as its own slot after the
+            // last regular card of the duration, instead of replacing that last card.
             activeRules.Add(new ActiveRule
             {
                 text = ReplacePlayerPlaceholders(card.cardText),
-                roundsRemaining = card.duration > 0 ? card.duration : ruleDurationRounds
+                turnsRemaining = duration * players.Count + 1
             });
         }
 
@@ -494,6 +499,25 @@ public class GameSceneManager : MonoBehaviour
                     }
                 }
             }
+
+            // cardText is hidden behind the image. If the card's raw text references
+            // the current player, show just their name (not the full card text) over
+            // the image via the title, with a backdrop so it stays readable on any photo.
+            bool showsCurrentPlayer = card.cardText.Contains("{CURRENT_PLAYER}");
+            if (cardTitle != null)
+            {
+                if (showsCurrentPlayer)
+                {
+                    cardTitle.text = players[currentPlayerIndex].name;
+                    cardTitle.color = Color.black;
+                    SetTitleBackdropVisible(true);
+                }
+                else
+                {
+                    cardTitle.text = "";
+                    SetTitleBackdropVisible(false);
+                }
+            }
         }
         else
         {
@@ -504,7 +528,96 @@ public class GameSceneManager : MonoBehaviour
                 cardTitle.text = titleText;
             }
             if (cardImage != null) cardImage.gameObject.SetActive(false);
+            SetTitleBackdropVisible(false);
         }
+    }
+
+    private Sprite roundedBackdropSprite;
+
+    Sprite GetRoundedBackdropSprite()
+    {
+        if (roundedBackdropSprite != null) return roundedBackdropSprite;
+
+        const int size = 64;
+        const int radius = 20;
+        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        tex.wrapMode = TextureWrapMode.Clamp;
+        Color[] pixels = new Color[size * size];
+
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float cx = -1f, cy = -1f;
+                if (x < radius && y < radius) { cx = radius; cy = radius; }
+                else if (x >= size - radius && y < radius) { cx = size - radius - 1; cy = radius; }
+                else if (x < radius && y >= size - radius) { cx = radius; cy = size - radius - 1; }
+                else if (x >= size - radius && y >= size - radius) { cx = size - radius - 1; cy = size - radius - 1; }
+
+                float alpha = 1f;
+                if (cx >= 0f)
+                {
+                    float dist = Vector2.Distance(new Vector2(x, y), new Vector2(cx, cy));
+                    alpha = Mathf.Clamp01(radius - dist + 0.5f);
+                }
+
+                pixels[y * size + x] = new Color(1f, 1f, 1f, alpha);
+            }
+        }
+
+        tex.SetPixels(pixels);
+        tex.Apply();
+
+        roundedBackdropSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f, 0,
+            SpriteMeshType.FullRect, new Vector4(radius, radius, radius, radius));
+        return roundedBackdropSprite;
+    }
+
+    void EnsureTitleBackdrop()
+    {
+        if (titleBackdrop != null || cardTitle == null) return;
+
+        GameObject backdropObj = new GameObject("TitleBackdrop", typeof(RectTransform));
+        backdropObj.transform.SetParent(cardTitle.transform.parent, false);
+
+        titleBackdrop = backdropObj.AddComponent<Image>();
+        titleBackdrop.sprite = GetRoundedBackdropSprite();
+        titleBackdrop.type = Image.Type.Sliced;
+        titleBackdrop.color = new Color(1f, 1f, 1f, 0.8f);
+
+        RectTransform backdropRect = backdropObj.GetComponent<RectTransform>();
+        RectTransform titleRect = cardTitle.rectTransform;
+        backdropRect.anchorMin = titleRect.anchorMin;
+        backdropRect.anchorMax = titleRect.anchorMax;
+        backdropRect.pivot = titleRect.pivot;
+        backdropRect.anchoredPosition = titleRect.anchoredPosition;
+
+        backdropRect.SetSiblingIndex(cardTitle.transform.GetSiblingIndex());
+    }
+
+    void UpdateTitleBackdropLayout()
+    {
+        if (titleBackdrop == null || cardTitle == null) return;
+
+        // The title field is sized for long titles, but the rendered text (especially
+        // a short name) can sit anywhere within it depending on alignment - so measure
+        // the actual rendered glyph bounds rather than assuming it's centered in the field.
+        cardTitle.ForceMeshUpdate();
+        Bounds b = cardTitle.textBounds;
+
+        RectTransform backdropRect = titleBackdrop.rectTransform;
+        backdropRect.sizeDelta = new Vector2(b.size.x, b.size.y) + new Vector2(28f, 12f);
+        backdropRect.anchoredPosition = cardTitle.rectTransform.anchoredPosition + new Vector2(b.center.x, b.center.y);
+    }
+
+    void SetTitleBackdropVisible(bool visible)
+    {
+        if (visible)
+        {
+            EnsureTitleBackdrop();
+            UpdateTitleBackdropLayout();
+        }
+        if (titleBackdrop != null) titleBackdrop.gameObject.SetActive(visible);
     }
 
     void HideCard()
@@ -512,6 +625,7 @@ public class GameSceneManager : MonoBehaviour
         if (cardBackground != null) cardBackground.gameObject.SetActive(false);
         if (cardText != null) cardText.gameObject.SetActive(false);
         if (cardImage != null) cardImage.gameObject.SetActive(false);
+        SetTitleBackdropVisible(false);
     }
 
     string ReplacePlayerPlaceholders(string text)
@@ -561,17 +675,14 @@ public class GameSceneManager : MonoBehaviour
         currentPlayerIndex = (currentPlayerIndex + 1) % players.Count;
         UpdateCurrentPlayer();
 
-        // currentPlayerIndex wrapping back to 0 marks one full round (every player had a turn).
-        if (currentPlayerIndex == 0 && activeRules.Count > 0)
+        // Each tap is one player's turn, regardless of which player started the rule.
+        for (int i = activeRules.Count - 1; i >= 0; i--)
         {
-            for (int i = activeRules.Count - 1; i >= 0; i--)
+            activeRules[i].turnsRemaining--;
+            if (activeRules[i].turnsRemaining <= 0)
             {
-                activeRules[i].roundsRemaining--;
-                if (activeRules[i].roundsRemaining <= 0)
-                {
-                    ruleEndAnnouncements.Enqueue(activeRules[i].text);
-                    activeRules.RemoveAt(i);
-                }
+                ruleEndAnnouncements.Enqueue(activeRules[i].text);
+                activeRules.RemoveAt(i);
             }
         }
     }
