@@ -42,6 +42,11 @@ public class GameSceneManager : MonoBehaviour
     [Range(4, 12)]
     public int minGapBetweenGroups = 6;
 
+    [Header("Rule Duration")]
+    // Used only as a fallback if a Regel card has no duration set in cards.json.
+    [Range(1, 10)]
+    public int ruleDurationRounds = 3;
+
     private List<Player> players;
     private int currentPlayerIndex = 0;
     private List<CardData> shuffledDeck = new List<CardData>();
@@ -52,6 +57,16 @@ public class GameSceneManager : MonoBehaviour
     private bool gameEnded = false;
     private bool isLastCardOfRound = false;
     private GameModeEnum currentGameMode;
+
+    private class ActiveRule
+    {
+        public string text;
+        public int roundsRemaining;
+    }
+
+    // Multiple rules can be active at once - each tracked with its own countdown.
+    private List<ActiveRule> activeRules = new List<ActiveRule>();
+    private Queue<string> ruleEndAnnouncements = new Queue<string>();
 
     void Start()
     {
@@ -123,9 +138,6 @@ public class GameSceneManager : MonoBehaviour
 
         // Group placement: WoP and Pantomime cards are inserted as small clusters
         // at randomized, spaced-out positions instead of being mixed in uniformly.
-        List<int> wopPositions = new List<int>();
-        List<int> pantomimePositions = new List<int>();
-
         int usableRange = Mathf.Max(0, Mathf.Min(shuffledDeck.Count - 15, requiredCards));
         int possibleWoPSlots = usableRange / (minGapBetweenGroups + 3); // +3 for group size
         int possiblePantomimeSlots = usableRange / (minGapBetweenGroups + 2); // +2 for group size
@@ -134,47 +146,13 @@ public class GameSceneManager : MonoBehaviour
         int maxPossiblePantomime = Mathf.Min(maxPantomimeGroups, pantomimeCards.Count, possiblePantomimeSlots);
 
         // Weighted randomness - leans towards the higher end of the possible range
-        int actualWoPGroups = Random.Range(maxPossibleWoP / 2, maxPossibleWoP + 1);
-        int actualPantomimeGroups = Random.Range(maxPossiblePantomime / 2, maxPossiblePantomime + 1);
+        int actualWoPGroups = maxPossibleWoP > 0 ? Random.Range(Mathf.Max(1, maxPossibleWoP / 2), maxPossibleWoP + 1) : 0;
+        int actualPantomimeGroups = maxPossiblePantomime > 0 ? Random.Range(Mathf.Max(1, maxPossiblePantomime / 2), maxPossiblePantomime + 1) : 0;
 
-        for (int i = 0; i < actualWoPGroups; i++)
-        {
-            int minPos = 15 + i * (minGapBetweenGroups + 5);
-            int maxPos = minPos + minGapBetweenGroups;
-            maxPos = Mathf.Min(maxPos, usableRange);
-
-            if (minPos < maxPos)
-            {
-                int pos = Random.Range(minPos, maxPos);
-                wopPositions.Add(pos);
-            }
-        }
-
-        for (int i = 0; i < actualPantomimeGroups; i++)
-        {
-            int minPos = 20 + i * (minGapBetweenGroups + 5);
-            int maxPos = minPos + minGapBetweenGroups;
-            maxPos = Mathf.Min(maxPos, usableRange);
-
-            if (minPos < maxPos)
-            {
-                int pos = Random.Range(minPos, maxPos);
-
-                // Keep distance from WoP groups so they don't overlap
-                bool tooClose = false;
-                foreach (int wopPos in wopPositions)
-                {
-                    if (Mathf.Abs(pos - wopPos) < minGapBetweenGroups)
-                    {
-                        tooClose = true;
-                        break;
-                    }
-                }
-
-                if (!tooClose)
-                    pantomimePositions.Add(pos);
-            }
-        }
+        // Both group types draw from the same pool of random positions with retries,
+        // so neither type systematically loses out to position collisions with the other.
+        List<int> wopPositions = PlaceGroupPositions(actualWoPGroups, usableRange, new List<int>());
+        List<int> pantomimePositions = PlaceGroupPositions(actualPantomimeGroups, usableRange, wopPositions);
 
         // Combine and shuffle insertion order so groups don't always appear WoP-first
         List<(int pos, string type, int index)> allGroups = new List<(int, string, int)>();
@@ -269,6 +247,42 @@ public class GameSceneManager : MonoBehaviour
                 shuffledDeck.RemoveAt(i);
             }
         }
+    }
+
+    // Picks targetCount random positions within [15, usableRange) that stay at least
+    // minGapBetweenGroups apart from each other and from existingPositions, retrying
+    // on collisions instead of silently dropping the slot.
+    List<int> PlaceGroupPositions(int targetCount, int usableRange, List<int> existingPositions)
+    {
+        var positions = new List<int>();
+        int minStart = 15;
+        if (minStart >= usableRange) return positions;
+
+        int maxAttempts = targetCount * 30;
+        int attempts = 0;
+
+        while (positions.Count < targetCount && attempts < maxAttempts)
+        {
+            attempts++;
+            int pos = Random.Range(minStart, usableRange);
+
+            bool tooClose = false;
+            foreach (int existing in existingPositions)
+            {
+                if (Mathf.Abs(pos - existing) < minGapBetweenGroups) { tooClose = true; break; }
+            }
+            if (!tooClose)
+            {
+                foreach (int placed in positions)
+                {
+                    if (Mathf.Abs(pos - placed) < minGapBetweenGroups) { tooClose = true; break; }
+                }
+            }
+
+            if (!tooClose) positions.Add(pos);
+        }
+
+        return positions;
     }
 
     // Returns up to targetCount fresh copies of the given card type from sourceCards.
@@ -366,7 +380,33 @@ public class GameSceneManager : MonoBehaviour
         }
 
         NextPlayer();
+
+        if (ruleEndAnnouncements.Count > 0)
+        {
+            DisplayRuleEndAnnouncement(ruleEndAnnouncements.Dequeue());
+            return;
+        }
+
         DrawCard();
+    }
+
+    void DisplayRuleEndAnnouncement(string ruleText)
+    {
+        if (cardBackground != null)
+        {
+            cardBackground.gameObject.SetActive(true);
+            cardBackground.color = new Color(0.6f, 0.6f, 0.6f);
+        }
+        if (cardImage != null) cardImage.gameObject.SetActive(false);
+
+        if (cardText != null)
+        {
+            cardText.gameObject.SetActive(true);
+            cardText.color = Color.white;
+            cardText.text = $"Diese Regel ist jetzt vorbei:\n\n{ruleText}";
+        }
+        cardTitle.color = Color.white;
+        cardTitle.text = "REGEL VORBEI";
     }
 
     void UpdateCurrentPlayer()
@@ -390,6 +430,15 @@ public class GameSceneManager : MonoBehaviour
         }
 
         cardsPlayedThisRound++;
+
+        if (card.cardType == CardType.Regel)
+        {
+            activeRules.Add(new ActiveRule
+            {
+                text = ReplacePlayerPlaceholders(card.cardText),
+                roundsRemaining = card.duration > 0 ? card.duration : ruleDurationRounds
+            });
+        }
 
         if (currentPlayerText != null)
         {
@@ -511,6 +560,20 @@ public class GameSceneManager : MonoBehaviour
     {
         currentPlayerIndex = (currentPlayerIndex + 1) % players.Count;
         UpdateCurrentPlayer();
+
+        // currentPlayerIndex wrapping back to 0 marks one full round (every player had a turn).
+        if (currentPlayerIndex == 0 && activeRules.Count > 0)
+        {
+            for (int i = activeRules.Count - 1; i >= 0; i--)
+            {
+                activeRules[i].roundsRemaining--;
+                if (activeRules[i].roundsRemaining <= 0)
+                {
+                    ruleEndAnnouncements.Enqueue(activeRules[i].text);
+                    activeRules.RemoveAt(i);
+                }
+            }
+        }
     }
 
     void ShowEndScreen()
