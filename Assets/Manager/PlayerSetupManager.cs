@@ -298,7 +298,14 @@ public class PlayerSetupManager : MonoBehaviour
     void UpdateGameModeDisplay()
     {
         GameModeEnum mode = GameModeManager.instance.getGameMode();
-        gameModeText.text = "Spielmodus: " + (mode == GameModeEnum.Classic ? "Classic" : "Flaschendrehen");
+        string modeLabel = mode switch
+        {
+            GameModeEnum.Classic => "Classic",
+            GameModeEnum.Quiz => "Quiz",
+            GameModeEnum.Flaschendrehen => "Flaschendrehen",
+            _ => mode.ToString()
+        };
+        gameModeText.text = "Spielmodus: " + modeLabel;
     }
     
     public void StartGame()

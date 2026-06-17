@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System;
-using System.Collections;
 
 public class NavigationSceneManager : MonoBehaviour
 {
@@ -57,24 +56,5 @@ public class NavigationSceneManager : MonoBehaviour
     private void triggerSceneChangedAction(Scene scene, LoadSceneMode mode)
     {
         onSceneChange?.Invoke(scene.name);
-        
-        // Orientierung nach Scene-Load setzen (verhindert Flackern)
-        StartCoroutine(SetOrientationAfterFrame(scene.name));
-    }
-    
-    private IEnumerator SetOrientationAfterFrame(string sceneName)
-    {
-        // Warte einen Frame, damit die Scene komplett geladen ist
-        yield return null;
-        
-        // Setze Orientierung basierend auf Scene
-        if (sceneName.ToLower().Contains("game"))
-        {
-            Screen.orientation = ScreenOrientation.LandscapeLeft;
-        }
-        else
-        {
-            Screen.orientation = ScreenOrientation.Portrait;
-        }
     }
 }

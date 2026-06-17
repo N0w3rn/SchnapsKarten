@@ -47,19 +47,23 @@ public class GameSceneManager : MonoBehaviour
     private int targetCardsForRound;
     private bool gameBlocked = false;
     private bool gameEnded = false;
-    
+    private bool isLastCardOfRound = false;
+    private GameModeEnum currentGameMode;
+
     void Start()
-    {   
+    {
         players = PlayerManager.instance.GetPlayers();
-        
+
         if (players == null || players.Count == 0)
         {
             BackToMenu();
             return;
         }
 
+        currentGameMode = GameModeManager.instance.getGameMode();
+
         targetCardsForRound = Random.Range(minCardsPerRound, maxCardsPerRound + 1);
-        
+
         LoadCards();
         SetupUI();
         UpdateCurrentPlayer();
@@ -71,34 +75,31 @@ public class GameSceneManager : MonoBehaviour
         DrawCard();
     }
 
-    void LoadCards(int copiesPerCard = 1)
+    void LoadCards()
     {
         if (cardLoader == null) return;
 
         cardLoader.LoadCardData();
-        
+
         var normalCards = cardLoader.GetAllCards();
         var spezialWoPCards = cardLoader.GetSpezialWoPCards();
         var spezialPantomimeCards = cardLoader.GetSpezialPantomimeCards();
-        
+
         var wopCards = new List<CardData>();
         var pantomimeCards = new List<CardData>();
         var nonSpecialCards = new List<CardData>();
-        
+
         // Erstelle Kopien und trenne verschiedene Kartentypen
         foreach (var card in normalCards)
         {
-            for (int i = 0; i < copiesPerCard; i++)
-            {
-                var copy = CreateCardCopy(card);
-                
-                if (card.cardType == CardType.WahrheitOderPflicht)
-                    wopCards.Add(copy);
-                else if (card.cardType == CardType.Pantomime)
-                    pantomimeCards.Add(copy);
-                else
-                    nonSpecialCards.Add(copy);
-            }
+            var copy = CreateCardCopy(card);
+
+            if (card.cardType == CardType.WahrheitOderPflicht)
+                wopCards.Add(copy);
+            else if (card.cardType == CardType.Pantomime)
+                pantomimeCards.Add(copy);
+            else
+                nonSpecialCards.Add(copy);
         }
         
         // Mische alle Listen
@@ -157,7 +158,7 @@ public class GameSceneManager : MonoBehaviour
         List<int> pantomimePositions = new List<int>();
         
         // Berechne wie oft eine Gruppe in den ersten X Karten passen würde
-        int usableRange = Mathf.Min(shuffledDeck.Count - 15, requiredCards);
+        int usableRange = Mathf.Max(0, Mathf.Min(shuffledDeck.Count - 15, requiredCards));
         int possibleWoPSlots = usableRange / (minGapBetweenGroups + 3); // +3 für Gruppengröße
         int possiblePantomimeSlots = usableRange / (minGapBetweenGroups + 2); // +2 für Gruppengröße
         
@@ -258,37 +259,43 @@ public class GameSceneManager : MonoBehaviour
 
     void ValidateFinalDeck()
     {
-        // Prüfe ob genug Karten vorhanden sind (RICHTIGE BERECHNUNG!)
         int requiredCards = targetCardsForRound + 4; // +4 Puffer
-        
-        if (shuffledDeck.Count < requiredCards)
-        {
-            Debug.LogWarning($"Deck zu klein! Benötigt: {requiredCards}, Vorhanden: {shuffledDeck.Count}");
-            
-            // Füge normale Karten hinzu falls verfügbar (OHNE LINQ)
-            var allCards = cardLoader.GetAllCards();
-            var normalCards = new List<CardData>();
-            
-            foreach (var card in allCards)
-            {
-                if (card.cardType != CardType.WahrheitOderPflicht && 
-                    card.cardType != CardType.Pantomime &&
-                    card.cardType != CardType.spezial_WoP &&
-                    card.cardType != CardType.spezial_Pantomime)
-                {
-                    normalCards.Add(card);
-                }
-            }
-            
-            while (shuffledDeck.Count < requiredCards && normalCards.Count > 0)
-            {
-                var randomCard = normalCards[Random.Range(0, normalCards.Count)];
-                shuffledDeck.Add(CreateCardCopy(randomCard));
-            }
-        }
-        
+
+        PadDeckWithNormalCards(requiredCards);
+
         // Entferne Gruppen aus dem Endbereich (letzten 8 Karten)
         RemoveGroupsFromEnd();
+
+        // RemoveGroupsFromEnd kann das Deck wieder unter die Zielgröße bringen - erneut auffüllen
+        PadDeckWithNormalCards(requiredCards);
+    }
+
+    void PadDeckWithNormalCards(int requiredCards)
+    {
+        if (shuffledDeck.Count >= requiredCards) return;
+
+        Debug.LogWarning($"Deck zu klein! Benötigt: {requiredCards}, Vorhanden: {shuffledDeck.Count}");
+
+        // Füge normale Karten hinzu falls verfügbar (OHNE LINQ)
+        var allCards = cardLoader.GetAllCards();
+        var normalCards = new List<CardData>();
+
+        foreach (var card in allCards)
+        {
+            if (card.cardType != CardType.WahrheitOderPflicht &&
+                card.cardType != CardType.Pantomime &&
+                card.cardType != CardType.spezial_WoP &&
+                card.cardType != CardType.spezial_Pantomime)
+            {
+                normalCards.Add(card);
+            }
+        }
+
+        while (shuffledDeck.Count < requiredCards && normalCards.Count > 0)
+        {
+            var randomCard = normalCards[Random.Range(0, normalCards.Count)];
+            shuffledDeck.Add(CreateCardCopy(randomCard));
+        }
     }
 
     void RemoveGroupsFromEnd()
@@ -363,7 +370,6 @@ public class GameSceneManager : MonoBehaviour
     
     public void OnScreenTouch()
     {
-        
         // Check: Sind wir im End-Screen?
         if (gameEnded)
         {
@@ -373,7 +379,16 @@ public class GameSceneManager : MonoBehaviour
 
         // Wenn blockiert, nichts machen
         if (gameBlocked) return;
-        
+
+        // Letzte Karte wurde bereits gezeigt - jetzt erst den End-Screen anzeigen
+        if (isLastCardOfRound)
+        {
+            ShowEndScreen();
+            gameBlocked = true;
+            gameEnded = true;
+            return;
+        }
+
         // Normale Karte: Nächster Spieler + neue Karte
         NextPlayer();
         DrawCard();
@@ -392,14 +407,13 @@ public class GameSceneManager : MonoBehaviour
     
     void DrawCard()
     {
-        if (shuffledDeck.Count == 0) 
-        {
-            ShuffleDeck();
-        }
-        
         CardData card = shuffledDeck[currentCardIndex];
-        currentCardIndex = (currentCardIndex + 1) % shuffledDeck.Count;
-        
+        currentCardIndex++;
+        if (currentCardIndex >= shuffledDeck.Count)
+        {
+            ShuffleDeck(); // setzt currentCardIndex zurück auf 0
+        }
+
         cardsPlayedThisRound++;
 
         currentPlayerText.color = Color.white;
@@ -407,20 +421,10 @@ public class GameSceneManager : MonoBehaviour
         cardText.color = Color.white;
         currentPlayerText.fontStyle = TMPro.FontStyles.Normal;
         currentPlayerText.fontSize = 46;
-        
-        // Check: Ist das die letzte Karte?
-        if (cardsPlayedThisRound >= targetCardsForRound)
-        {
-            // LETZTE KARTE: Sofort End-Screen anzeigen
-            ShowEndScreen();
-            gameBlocked = true;
-            gameEnded = true;
-        }
-        else
-        {
-            // Normale Karte
-            DisplayCard(card);
-        }
+
+        // Karte immer anzeigen - der End-Screen folgt erst beim nächsten Touch
+        DisplayCard(card);
+        isLastCardOfRound = cardsPlayedThisRound >= targetCardsForRound;
     }
     
     void DisplayCard(CardData card)

@@ -131,7 +131,7 @@ public class CardLoader : MonoBehaviour
     
     CardType ConvertToCardType(string typeString)
     {
-        switch (typeString.ToLower())
+        switch ((typeString ?? "einfach").ToLower())
         {
             case "einfach": return CardType.Einfach;
             case "spiel": return CardType.Spiel;
