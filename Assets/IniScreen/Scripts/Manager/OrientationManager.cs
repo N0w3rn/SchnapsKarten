@@ -40,7 +40,6 @@ public class OrientationManager : MonoBehaviour
     
     private void OnSceneChanged(string sceneName)
     {
-        
         // Landscape nur für GameScene
         if (sceneName == "GameScene")
         {
