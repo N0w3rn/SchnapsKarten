@@ -58,6 +58,8 @@ public class GameSceneManager : MonoBehaviour
     private bool isLastCardOfRound = false;
     private GameModeEnum currentGameMode;
     private Image titleBackdrop;
+    private VerticalAlignmentOptions defaultTitleVerticalAlignment;
+    private bool capturedDefaultTitleAlignment = false;
 
     private class ActiveRule
     {
@@ -464,6 +466,12 @@ public class GameSceneManager : MonoBehaviour
         string displayText = ReplacePlayerPlaceholders(card.cardText);
         string titleText = card.cardTitle;
 
+        if (cardTitle != null && !capturedDefaultTitleAlignment)
+        {
+            defaultTitleVerticalAlignment = cardTitle.verticalAlignment;
+            capturedDefaultTitleAlignment = true;
+        }
+
         if (cardBackground != null)
         {
             cardBackground.gameObject.SetActive(true);
@@ -510,11 +518,13 @@ public class GameSceneManager : MonoBehaviour
                 {
                     cardTitle.text = players[currentPlayerIndex].name;
                     cardTitle.color = Color.black;
+                    cardTitle.verticalAlignment = VerticalAlignmentOptions.Top;
                     SetTitleBackdropVisible(true);
                 }
                 else
                 {
                     cardTitle.text = "";
+                    cardTitle.verticalAlignment = defaultTitleVerticalAlignment;
                     SetTitleBackdropVisible(false);
                 }
             }
@@ -526,6 +536,7 @@ public class GameSceneManager : MonoBehaviour
                 cardText.gameObject.SetActive(true);
                 cardText.text = displayText;
                 cardTitle.text = titleText;
+                cardTitle.verticalAlignment = defaultTitleVerticalAlignment;
             }
             if (cardImage != null) cardImage.gameObject.SetActive(false);
             SetTitleBackdropVisible(false);
