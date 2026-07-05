@@ -20,7 +20,7 @@ public class QuizSceneManager : MonoBehaviour
     [Range(1, 20)]
     public int maxQuestionsBetweenScoreCards = 7;
 
-    private enum Phase { TeamSetup, CategoryAnnounce, Question, Answer, ScoreCard, End }
+    private enum Phase { CategoryAnnounce, Question, Answer, ScoreCard, End }
 
     private class CategoryState
     {
@@ -28,7 +28,7 @@ public class QuizSceneManager : MonoBehaviour
         public List<QuizQuestionJSON> remaining = new List<QuizQuestionJSON>();
     }
 
-    private Phase phase = Phase.TeamSetup;
+    private Phase phase = Phase.CategoryAnnounce;
     private readonly List<Team> teams = new List<Team>();
     private List<CategoryState> categories = new List<CategoryState>();
     private List<int> categoryOrder = new List<int>();
@@ -47,20 +47,21 @@ public class QuizSceneManager : MonoBehaviour
     // ignored so one press can't both trigger a button and advance the phase.
     private int lastButtonFrame = -1;
 
-    // Colors
-    private static readonly Color BackgroundColor = new Color(0.10f, 0.14f, 0.22f);
-    private static readonly Color PanelColor = new Color(1f, 1f, 1f, 0.12f);
-    private static readonly Color AccentColor = new Color(0.95f, 0.55f, 0.15f);
+    // App palette - matches GetCardColor in GameSceneManager and the menu/setup artwork
+    // (beige background, teal shapes, orange accents, white pills with teal outline).
+    private static readonly Color BeigeColor = new Color(0.929f, 0.906f, 0.890f);
+    private static readonly Color LightTealColor = new Color(0.51f, 0.75f, 0.8f);
+    private static readonly Color TealColor = new Color(0.28f, 0.62f, 0.71f);
+    private static readonly Color DarkTealColor = new Color(0.07f, 0.42f, 0.49f);
+    private static readonly Color OrangeColor = new Color(1f, 0.65f, 0.17f);
+    private static readonly Color PurpleColor = new Color(0.8f, 0.3f, 0.8f);
+    private static readonly Color TextDarkColor = new Color(0.196f, 0.196f, 0.196f);
+    private static readonly Color PanelWhiteColor = new Color(1f, 1f, 1f, 0.6f);
     private static readonly Color GreenColor = new Color(0.22f, 0.65f, 0.32f);
     private static readonly Color RedColor = new Color(0.78f, 0.25f, 0.25f);
 
-    // Setup UI
-    private GameObject setupRoot;
-    private RectTransform setupListContent;
-    private Button startButton;
-    private TextMeshProUGUI startButtonLabel;
-
     // Game UI
+    private Image backgroundImage;
     private GameObject gameRoot;
     private TextMeshProUGUI headerText;
     private TextMeshProUGUI bodyText;
@@ -77,6 +78,15 @@ public class QuizSceneManager : MonoBehaviour
 
     void Start()
     {
+        // Teams are built in the QuizSetup scene and handed over via QuizSession.
+        if (QuizSession.teams == null || QuizSession.teams.Count < 2)
+        {
+            Debug.LogError("QuizSceneManager: no teams set up - returning to menu.");
+            NavigationSceneManager.instance.LoadScene("MainMenu");
+            return;
+        }
+        teams.AddRange(QuizSession.teams);
+
         categories = BuildCategoryStates(QuizLoader.LoadCategories());
         scoreCards = QuizLoader.LoadScoreCards();
 
@@ -88,21 +98,18 @@ public class QuizSceneManager : MonoBehaviour
         }
 
         Canvas canvas = UiFactory.CreateCanvas("QuizCanvas");
-        RectTransform background = UiFactory.CreatePanel("Background", canvas.transform, BackgroundColor);
+        RectTransform background = UiFactory.CreatePanel("Background", canvas.transform, BeigeColor);
         UiFactory.Stretch(background);
-        background.GetComponent<Image>().raycastTarget = false;
+        backgroundImage = background.GetComponent<Image>();
+        backgroundImage.raycastTarget = false;
 
-        BuildSetupUI(canvas.transform);
         BuildGameUI(canvas.transform);
         BuildScoreboardModal(canvas.transform);
 
-        teams.Add(new Team("Team 1"));
-        teams.Add(new Team("Team 2"));
-        RebuildSetupList();
-
-        setupRoot.SetActive(true);
-        gameRoot.SetActive(false);
+        gameRoot.SetActive(true);
         modalRoot.SetActive(false);
+
+        StartGame();
     }
 
     void Update()
@@ -136,171 +143,6 @@ public class QuizSceneManager : MonoBehaviour
         return EventSystem.current.IsPointerOverGameObject();
     }
 
-    // ---------- Team setup ----------
-
-    void BuildSetupUI(Transform canvas)
-    {
-        setupRoot = new GameObject("SetupRoot", typeof(RectTransform)).gameObject;
-        setupRoot.transform.SetParent(canvas, false);
-        UiFactory.Stretch((RectTransform)setupRoot.transform);
-
-        TextMeshProUGUI title = UiFactory.CreateText("Title", setupRoot.transform, "Teams erstellen", 56, Color.white);
-        title.raycastTarget = false;
-        title.fontStyle = FontStyles.Bold;
-        UiFactory.Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -20f), new Vector2(1200f, 70f));
-
-        ScrollRect scroll;
-        setupListContent = UiFactory.CreateScrollView("TeamList", setupRoot.transform, out scroll);
-        RectTransform scrollRect = (RectTransform)scroll.transform;
-        scrollRect.anchorMin = new Vector2(0.5f, 0f);
-        scrollRect.anchorMax = new Vector2(0.5f, 1f);
-        scrollRect.pivot = new Vector2(0.5f, 0.5f);
-        scrollRect.sizeDelta = new Vector2(1100f, -230f);
-        scrollRect.anchoredPosition = new Vector2(0f, 15f);
-
-        Button backButton = UiFactory.CreateButton("BackButton", setupRoot.transform, "Zurück", 36,
-            new Color(1f, 1f, 1f, 0.15f), Color.white);
-        UiFactory.Place((RectTransform)backButton.transform, new Vector2(0f, 0f), new Vector2(30f, 25f), new Vector2(240f, 90f));
-        backButton.onClick.AddListener(BackToMenu);
-
-        Button addTeamButton = UiFactory.CreateButton("AddTeamButton", setupRoot.transform, "+ Team", 36,
-            AccentColor, Color.white);
-        UiFactory.Place((RectTransform)addTeamButton.transform, new Vector2(0.5f, 0f), new Vector2(0f, 25f), new Vector2(280f, 90f));
-        addTeamButton.onClick.AddListener(() =>
-        {
-            teams.Add(new Team($"Team {teams.Count + 1}"));
-            RebuildSetupList();
-        });
-
-        startButton = UiFactory.CreateButton("StartButton", setupRoot.transform, "Start", 36, GreenColor, Color.white);
-        UiFactory.Place((RectTransform)startButton.transform, new Vector2(1f, 0f), new Vector2(-30f, 25f), new Vector2(340f, 90f));
-        startButtonLabel = startButton.GetComponentInChildren<TextMeshProUGUI>();
-        startButton.onClick.AddListener(StartGame);
-    }
-
-    void RebuildSetupList()
-    {
-        foreach (Transform child in setupListContent)
-        {
-            Destroy(child.gameObject);
-        }
-
-        for (int t = 0; t < teams.Count; t++)
-        {
-            int teamIndex = t;
-            Team team = teams[t];
-
-            RectTransform block = UiFactory.CreatePanel($"Team{t}", setupListContent, PanelColor, rounded: true);
-            VerticalLayoutGroup blockLayout = block.gameObject.AddComponent<VerticalLayoutGroup>();
-            blockLayout.childControlWidth = true;
-            blockLayout.childControlHeight = true;
-            blockLayout.childForceExpandWidth = true;
-            blockLayout.childForceExpandHeight = false;
-            blockLayout.spacing = 8f;
-            blockLayout.padding = new RectOffset(16, 16, 12, 12);
-            block.GetComponent<Image>().raycastTarget = false;
-
-            // Team name + remove team
-            RectTransform nameRow = CreateRow(block);
-            TMP_InputField nameInput = UiFactory.CreateInputField("TeamName", nameRow, "Teamname", 34);
-            AddFlexible(nameInput.gameObject);
-            nameInput.text = team.name;
-            nameInput.onEndEdit.AddListener(value =>
-            {
-                team.name = string.IsNullOrWhiteSpace(value) ? $"Team {teamIndex + 1}" : value.Trim();
-            });
-            Button removeTeam = UiFactory.CreateButton("RemoveTeam", nameRow, "X", 34, RedColor, Color.white);
-            AddFixed(removeTeam.gameObject, 80f);
-            removeTeam.onClick.AddListener(() =>
-            {
-                teams.RemoveAt(teamIndex);
-                RebuildSetupList();
-            });
-
-            // Existing players
-            for (int p = 0; p < team.players.Count; p++)
-            {
-                int playerIndex = p;
-                RectTransform playerRow = CreateRow(block);
-                TextMeshProUGUI playerLabel = UiFactory.CreateText("Player", playerRow,
-                    team.players[p], 32, Color.white, TextAlignmentOptions.Left);
-                playerLabel.raycastTarget = false;
-                playerLabel.margin = new Vector4(14f, 0f, 0f, 0f);
-                AddFlexible(playerLabel.gameObject);
-                Button removePlayer = UiFactory.CreateButton("RemovePlayer", playerRow, "-", 34,
-                    new Color(1f, 1f, 1f, 0.2f), Color.white);
-                AddFixed(removePlayer.gameObject, 80f);
-                removePlayer.onClick.AddListener(() =>
-                {
-                    team.players.RemoveAt(playerIndex);
-                    RebuildSetupList();
-                });
-            }
-
-            // New player input
-            RectTransform addRow = CreateRow(block);
-            TMP_InputField playerInput = UiFactory.CreateInputField("NewPlayer", addRow, "Spieler hinzufügen...", 32);
-            AddFlexible(playerInput.gameObject);
-            Button addPlayer = UiFactory.CreateButton("AddPlayer", addRow, "+", 36, GreenColor, Color.white);
-            AddFixed(addPlayer.gameObject, 80f);
-
-            void CommitPlayer()
-            {
-                string name = playerInput.text.Trim();
-                if (string.IsNullOrEmpty(name)) return;
-                team.players.Add(name);
-                RebuildSetupList();
-            }
-            addPlayer.onClick.AddListener(CommitPlayer);
-            playerInput.onSubmit.AddListener(_ => CommitPlayer());
-        }
-
-        UpdateStartButton();
-    }
-
-    RectTransform CreateRow(Transform parent)
-    {
-        GameObject row = new GameObject("Row", typeof(RectTransform));
-        row.transform.SetParent(parent, false);
-        HorizontalLayoutGroup layout = row.AddComponent<HorizontalLayoutGroup>();
-        layout.childControlWidth = true;
-        layout.childControlHeight = true;
-        layout.childForceExpandWidth = false;
-        layout.childForceExpandHeight = true;
-        layout.spacing = 10f;
-        LayoutElement element = row.AddComponent<LayoutElement>();
-        element.preferredHeight = 72f;
-        return (RectTransform)row.transform;
-    }
-
-    void AddFlexible(GameObject obj)
-    {
-        LayoutElement element = obj.AddComponent<LayoutElement>();
-        element.flexibleWidth = 1f;
-    }
-
-    void AddFixed(GameObject obj, float width)
-    {
-        LayoutElement element = obj.AddComponent<LayoutElement>();
-        element.preferredWidth = width;
-        element.flexibleWidth = 0f;
-    }
-
-    void UpdateStartButton()
-    {
-        bool enoughTeams = teams.Count >= 2;
-        bool allTeamsHavePlayers = true;
-        foreach (Team team in teams)
-        {
-            if (team.players.Count == 0) allTeamsHavePlayers = false;
-        }
-
-        startButton.interactable = enoughTeams && allTeamsHavePlayers;
-        if (!enoughTeams) startButtonLabel.text = "Min. 2 Teams";
-        else if (!allTeamsHavePlayers) startButtonLabel.text = "Spieler fehlen";
-        else startButtonLabel.text = "Start";
-    }
-
     // ---------- Game UI ----------
 
     void BuildGameUI(Transform canvas)
@@ -309,7 +151,7 @@ public class QuizSceneManager : MonoBehaviour
         gameRoot.transform.SetParent(canvas, false);
         UiFactory.Stretch((RectTransform)gameRoot.transform);
 
-        headerText = UiFactory.CreateText("Header", gameRoot.transform, "", 48, AccentColor);
+        headerText = UiFactory.CreateText("Header", gameRoot.transform, "", 48, Color.white);
         headerText.raycastTarget = false;
         headerText.fontStyle = FontStyles.Bold;
         UiFactory.Place(headerText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -25f), new Vector2(1300f, 70f));
@@ -339,12 +181,12 @@ public class QuizSceneManager : MonoBehaviour
         UiFactory.Place(tapHintText.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 20f), new Vector2(800f, 45f));
 
         scoreButton = UiFactory.CreateButton("ScoreButton", gameRoot.transform, "Punkte", 32,
-            new Color(1f, 1f, 1f, 0.18f), Color.white);
+            DarkTealColor, Color.white);
         UiFactory.Place((RectTransform)scoreButton.transform, new Vector2(1f, 1f), new Vector2(-25f, -25f), new Vector2(230f, 80f));
         scoreButton.onClick.AddListener(OpenScoreboard);
 
         Button menuButton = UiFactory.CreateButton("MenuButton", gameRoot.transform, "X", 32,
-            new Color(1f, 1f, 1f, 0.18f), Color.white);
+            DarkTealColor, Color.white);
         UiFactory.Place((RectTransform)menuButton.transform, new Vector2(0f, 1f), new Vector2(25f, -25f), new Vector2(80f, 80f));
         menuButton.onClick.AddListener(BackToMenu);
 
@@ -367,15 +209,15 @@ public class QuizSceneManager : MonoBehaviour
         overlayButton.transition = Selectable.Transition.None;
         overlayButton.onClick.AddListener(CloseScoreboard);
 
-        RectTransform panel = UiFactory.CreatePanel("Panel", modalRoot.transform, new Color(0.14f, 0.18f, 0.27f), rounded: true);
+        RectTransform panel = UiFactory.CreatePanel("Panel", modalRoot.transform, BeigeColor, rounded: true);
         UiFactory.Place(panel, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1000f, 800f));
 
-        TextMeshProUGUI title = UiFactory.CreateText("Title", panel, "Punktestand", 46, Color.white);
+        TextMeshProUGUI title = UiFactory.CreateText("Title", panel, "Punktestand", 46, DarkTealColor);
         title.raycastTarget = false;
         title.fontStyle = FontStyles.Bold;
         UiFactory.Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -20f), new Vector2(800f, 60f));
 
-        Button closeButton = UiFactory.CreateButton("Close", panel, "X", 34, RedColor, Color.white);
+        Button closeButton = UiFactory.CreateButton("Close", panel, "X", 34, OrangeColor, Color.white);
         UiFactory.Place((RectTransform)closeButton.transform, new Vector2(1f, 1f), new Vector2(-15f, -15f), new Vector2(70f, 70f));
         closeButton.onClick.AddListener(CloseScoreboard);
 
@@ -413,13 +255,13 @@ public class QuizSceneManager : MonoBehaviour
         List<Team> ordered = GetTeamsByScore();
         for (int i = 0; i < ordered.Count; i++)
         {
-            RectTransform row = UiFactory.CreatePanel($"Score{i}", container, PanelColor, rounded: true);
+            RectTransform row = UiFactory.CreatePanel($"Score{i}", container, PanelWhiteColor, rounded: true);
             row.GetComponent<Image>().raycastTarget = false;
             LayoutElement element = row.gameObject.AddComponent<LayoutElement>();
             element.preferredHeight = 80f;
 
             TextMeshProUGUI text = UiFactory.CreateText("Text", row,
-                $"{i + 1}. {ordered[i].name}   -   {ordered[i].score} Punkte", 36, Color.white, TextAlignmentOptions.Left);
+                $"{i + 1}. {ordered[i].name}   -   {ordered[i].score} Punkte", 36, TextDarkColor, TextAlignmentOptions.Left);
             text.raycastTarget = false;
             text.margin = new Vector4(24f, 0f, 24f, 0f);
             UiFactory.Stretch(text.rectTransform);
@@ -437,14 +279,10 @@ public class QuizSceneManager : MonoBehaviour
 
     void StartGame()
     {
-        lastButtonFrame = Time.frameCount;
         questionsPerTeam = Random.Range(minQuestionsPerTeam, maxQuestionsPerTeam + 1);
         roundsDone = 0;
         scoreCardCountdown = Random.Range(minQuestionsBetweenScoreCards, maxQuestionsBetweenScoreCards + 1);
         ShuffleCategoryOrder();
-
-        setupRoot.SetActive(false);
-        gameRoot.SetActive(true);
         StartCategoryRound();
     }
 
@@ -497,6 +335,7 @@ public class QuizSceneManager : MonoBehaviour
         teamCursor = 0;
 
         phase = Phase.CategoryAnnounce;
+        ApplyPage(OrangeColor, Color.white);
         Sprite image = QuizLoader.LoadCategoryImage(currentCategory.def.imageName);
         headerText.text = "Kategorie";
         if (image != null)
@@ -522,6 +361,7 @@ public class QuizSceneManager : MonoBehaviour
         currentCategory.remaining.RemoveAt(currentCategory.remaining.Count - 1);
 
         phase = Phase.Question;
+        ApplyPage(TealColor, Color.white);
         headerText.text = $"{teams[teamCursor].name}  -  {currentCategory.def.name}";
         SetGameElements(showImage: false, body: currentQuestion.question, showAnswerButtons: false,
             showTapHint: true, showEndList: false);
@@ -530,6 +370,7 @@ public class QuizSceneManager : MonoBehaviour
     void ShowAnswer()
     {
         phase = Phase.Answer;
+        ApplyPage(LightTealColor, TextDarkColor);
         TextMeshProUGUI labelA = answerButtonA.GetComponentInChildren<TextMeshProUGUI>();
         TextMeshProUGUI labelB = answerButtonB.GetComponentInChildren<TextMeshProUGUI>();
 
@@ -574,6 +415,7 @@ public class QuizSceneManager : MonoBehaviour
     void ShowScoreCard()
     {
         phase = Phase.ScoreCard;
+        ApplyPage(PurpleColor, Color.white);
         string text = ResolveTeamPlaceholders(scoreCards[Random.Range(0, scoreCards.Count)]);
         headerText.text = "Trink-Zeit!";
         SetGameElements(showImage: false, body: text, showAnswerButtons: false, showTapHint: true, showEndList: false);
@@ -595,12 +437,23 @@ public class QuizSceneManager : MonoBehaviour
     void ShowEnd()
     {
         phase = Phase.End;
+        ApplyPage(BeigeColor, DarkTealColor);
         List<Team> ordered = GetTeamsByScore();
         bool tie = ordered.Count > 1 && ordered[0].score == ordered[1].score;
         headerText.text = tie ? "Unentschieden!" : $"{ordered[0].name} gewinnt!";
 
         SetGameElements(showImage: false, body: "", showAnswerButtons: false, showTapHint: true, showEndList: true);
         PopulateScoreList(endListContainer);
+    }
+
+    // Each page type gets its own background color from the app palette,
+    // with the text color chosen for contrast on it.
+    void ApplyPage(Color background, Color text)
+    {
+        backgroundImage.color = background;
+        headerText.color = text;
+        bodyText.color = text;
+        tapHintText.color = new Color(text.r, text.g, text.b, 0.5f);
     }
 
     void SetGameElements(bool showImage, string body, bool showAnswerButtons, bool showTapHint, bool showEndList)

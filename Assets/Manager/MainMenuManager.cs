@@ -27,10 +27,10 @@ public class MainMenuManager : MonoBehaviour
     {
         GameModeManager.instance.setGameMode(gameMode);
 
-        // Quiz has its own team setup inside its scene; the other modes share PlayerSetup.
+        // Quiz has its own team setup scene; the other modes share PlayerSetup.
         if (gameMode == GameModeEnum.Quiz)
         {
-            NavigationSceneManager.instance.LoadScene("QuizScene");
+            NavigationSceneManager.instance.LoadScene("QuizSetup");
         }
         else
         {

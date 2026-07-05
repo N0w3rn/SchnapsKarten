@@ -45,3 +45,10 @@ public class Team
         name = teamName;
     }
 }
+
+// Hands the teams built in the QuizSetup scene over to the QuizScene.
+// Same idea as PlayerManager for the classic mode, but no scene object needed.
+public static class QuizSession
+{
+    public static List<Team> teams;
+}

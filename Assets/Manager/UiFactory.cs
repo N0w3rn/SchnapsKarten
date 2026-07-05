@@ -8,15 +8,27 @@ using TMPro;
 public static class UiFactory
 {
     private static Sprite roundedSprite;
+    private static Sprite roundedOutlineSprite;
 
-    // Procedurally generated rounded-rect sprite with 9-slice borders.
-    // Built in code because Resources.GetBuiltinResource is not reliable in this Unity version.
-    public static Sprite GetRoundedSprite()
+    // Alpha of a rounded-rect at the given pixel (1 inside, 0 outside, soft edge).
+    static float RoundedAlpha(int x, int y, int size, int radius)
     {
-        if (roundedSprite != null) return roundedSprite;
+        float cx = -1f, cy = -1f;
+        if (x < radius && y < radius) { cx = radius; cy = radius; }
+        else if (x >= size - radius && y < radius) { cx = size - radius - 1; cy = radius; }
+        else if (x < radius && y >= size - radius) { cx = radius; cy = size - radius - 1; }
+        else if (x >= size - radius && y >= size - radius) { cx = size - radius - 1; cy = size - radius - 1; }
 
+        if (cx < 0f) return 1f;
+        float dist = Vector2.Distance(new Vector2(x, y), new Vector2(cx, cy));
+        return Mathf.Clamp01(radius - dist + 0.5f);
+    }
+
+    static Sprite BuildRoundedSprite(bool outlineOnly)
+    {
         const int size = 64;
         const int radius = 20;
+        const int border = 6;
         Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
         tex.wrapMode = TextureWrapMode.Clamp;
         Color[] pixels = new Color[size * size];
@@ -25,19 +37,17 @@ public static class UiFactory
         {
             for (int x = 0; x < size; x++)
             {
-                float cx = -1f, cy = -1f;
-                if (x < radius && y < radius) { cx = radius; cy = radius; }
-                else if (x >= size - radius && y < radius) { cx = size - radius - 1; cy = radius; }
-                else if (x < radius && y >= size - radius) { cx = radius; cy = size - radius - 1; }
-                else if (x >= size - radius && y >= size - radius) { cx = size - radius - 1; cy = size - radius - 1; }
-
-                float alpha = 1f;
-                if (cx >= 0f)
+                float alpha = RoundedAlpha(x, y, size, radius);
+                if (outlineOnly)
                 {
-                    float dist = Vector2.Distance(new Vector2(x, y), new Vector2(cx, cy));
-                    alpha = Mathf.Clamp01(radius - dist + 0.5f);
+                    // Subtract the same shape inset by the border width, leaving a ring.
+                    float inner = 0f;
+                    if (x >= border && x < size - border && y >= border && y < size - border)
+                    {
+                        inner = RoundedAlpha(x - border, y - border, size - 2 * border, radius - border);
+                    }
+                    alpha *= 1f - inner;
                 }
-
                 pixels[y * size + x] = new Color(1f, 1f, 1f, alpha);
             }
         }
@@ -45,9 +55,23 @@ public static class UiFactory
         tex.SetPixels(pixels);
         tex.Apply();
 
-        roundedSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f, 0,
+        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f, 0,
             SpriteMeshType.FullRect, new Vector4(radius, radius, radius, radius));
+    }
+
+    // Procedurally generated rounded-rect sprite with 9-slice borders.
+    // Built in code because Resources.GetBuiltinResource is not reliable in this Unity version.
+    public static Sprite GetRoundedSprite()
+    {
+        if (roundedSprite == null) roundedSprite = BuildRoundedSprite(outlineOnly: false);
         return roundedSprite;
+    }
+
+    // Ring-only variant, used to mimic the outlined pill look of the NameInput graphics.
+    public static Sprite GetRoundedOutlineSprite()
+    {
+        if (roundedOutlineSprite == null) roundedOutlineSprite = BuildRoundedSprite(outlineOnly: true);
+        return roundedOutlineSprite;
     }
 
     public static Canvas CreateCanvas(string name)
@@ -114,10 +138,20 @@ public static class UiFactory
     }
 
     public static TMP_InputField CreateInputField(string name, Transform parent, string placeholderText,
-        float fontSize)
+        float fontSize, Color? borderColor = null)
     {
-        RectTransform rect = CreatePanel(name, parent, new Color(1f, 1f, 1f, 0.92f), rounded: true);
+        RectTransform rect = CreatePanel(name, parent, Color.white, rounded: true);
         TMP_InputField input = rect.gameObject.AddComponent<TMP_InputField>();
+
+        if (borderColor.HasValue)
+        {
+            RectTransform border = CreatePanel("Border", rect, borderColor.Value);
+            Image borderImage = border.GetComponent<Image>();
+            borderImage.sprite = GetRoundedOutlineSprite();
+            borderImage.type = Image.Type.Sliced;
+            borderImage.raycastTarget = false;
+            Stretch(border);
+        }
 
         RectTransform textArea = new GameObject("TextArea", typeof(RectTransform)).GetComponent<RectTransform>();
         textArea.SetParent(rect, false);
