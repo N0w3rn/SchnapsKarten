@@ -399,7 +399,7 @@ MonoBehaviour:
   startGameButton: {fileID: 253979414}
   backButton: {fileID: 216869705}
   gameModeText: {fileID: 1086518593}
-  playerNamesFile: {fileID: 4900000, guid: fa1803d2cdad38144b505de64dc89104, type: 3}
+  teamNamesFile: {fileID: 4900000, guid: cf54925500506964eb5b8dcd9decacf6, type: 3}
 --- !u!4 &538966088
 Transform:
   m_ObjectHideFlags: 0

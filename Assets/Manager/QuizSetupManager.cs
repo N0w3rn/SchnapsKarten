@@ -4,10 +4,9 @@ using TMPro;
 using System.Collections.Generic;
 using System;
 
-// Team setup for the quiz mode. Deliberately mirrors PlayerSetupManager so the
-// QuizSetup scene can be a duplicate of the PlayerSetup scene: same PlayerRow
-// prefabs, same name suggestions, one start button, arrow back button.
-// Teams are shown as sections ("Team 1", "Team 2", ...) with player rows beneath.
+// Team setup for the quiz mode. Works exactly like PlayerSetupManager, but the
+// rows hold team names instead of player names, with team-name suggestions from
+// team_names.json (assigned to the namesFile field in the QuizSetup scene).
 public class QuizSetupManager : MonoBehaviour
 {
     [Header("UI")]
@@ -18,21 +17,18 @@ public class QuizSetupManager : MonoBehaviour
     public TextMeshProUGUI gameModeText;
 
     [Header("Name Suggestions")]
-    public TextAsset playerNamesFile;
+    public TextAsset teamNamesFile;
 
-    private readonly List<Team> teams = new List<Team>();
+    private List<string> teamNames = new List<string>();
     private List<string> availableNames = new List<string>();
     private int currentPrefabIndex = 0;
 
-    private static readonly Color HeaderColor = new Color(0.07f, 0.42f, 0.49f);
-    private static readonly Color IconGrayColor = new Color(0.55f, 0.55f, 0.55f);
+    private const string TEAM_NAMES_KEY = "SavedTeamNames";
 
     void Start()
     {
-        LoadPlayerNames();
-
-        teams.Add(new Team("Team 1"));
-        teams.Add(new Team("Team 2"));
+        LoadSuggestionNames();
+        LoadSavedTeams();
 
         if (gameModeText != null) gameModeText.text = "Spielmodus: Quiz";
         RefreshUI();
@@ -41,48 +37,84 @@ public class QuizSetupManager : MonoBehaviour
         backButton.onClick.AddListener(BackToMenu);
     }
 
-    void LoadPlayerNames()
+    void LoadSavedTeams()
     {
-        if (playerNamesFile == null)
+        if (PlayerPrefs.HasKey(TEAM_NAMES_KEY))
         {
-            Debug.LogWarning("No names JSON assigned! Using default names.");
-            availableNames = new List<string> { "Alex", "Sam", "Chris", "Jordan", "Casey", "Taylor", "Robin", "Jamie" };
+            try
+            {
+                PlayerNamesJSON savedData = JsonUtility.FromJson<PlayerNamesJSON>(PlayerPrefs.GetString(TEAM_NAMES_KEY));
+                if (savedData != null && savedData.names != null)
+                {
+                    teamNames = new List<string>(savedData.names);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Fehler beim Laden gespeicherter Teams: {e.Message}");
+                teamNames.Clear();
+            }
+        }
+    }
+
+    void SaveTeams()
+    {
+        try
+        {
+            PlayerNamesJSON saveData = new PlayerNamesJSON();
+            saveData.names = new List<string>(teamNames);
+            PlayerPrefs.SetString(TEAM_NAMES_KEY, JsonUtility.ToJson(saveData));
+            PlayerPrefs.Save();
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Fehler beim Speichern der Teams: {e.Message}");
+        }
+    }
+
+    void LoadSuggestionNames()
+    {
+        if (teamNamesFile == null)
+        {
+            Debug.LogWarning("Keine Teamnamen-JSON-Datei zugewiesen! Verwende Standard-Namen.");
+            availableNames = new List<string> { "Team Prost", "Die Durstlöscher", "Quizottel", "Schluckspechte" };
             return;
         }
 
         try
         {
-            PlayerNamesJSON namesData = JsonUtility.FromJson<PlayerNamesJSON>(playerNamesFile.text);
+            PlayerNamesJSON namesData = JsonUtility.FromJson<PlayerNamesJSON>(teamNamesFile.text);
             availableNames = new List<string>(namesData.names);
 
             if (availableNames.Count == 0)
             {
-                availableNames = new List<string> { "Alex", "Sam", "Chris", "Jordan" };
+                Debug.LogWarning("Teamnamen-Liste ist leer! Verwende Standard-Namen.");
+                availableNames = new List<string> { "Team Prost", "Die Durstlöscher", "Quizottel", "Schluckspechte" };
             }
         }
         catch (Exception e)
         {
-            Debug.LogError($"Fehler beim Laden der Namen-JSON: {e.Message}");
-            availableNames = new List<string> { "Alex", "Sam", "Chris", "Jordan" };
+            Debug.LogError($"Fehler beim Laden der Teamnamen-JSON: {e.Message}");
+            availableNames = new List<string> { "Team Prost", "Die Durstlöscher", "Quizottel", "Schluckspechte" };
         }
     }
 
     string GetRandomName()
     {
-        if (availableNames.Count == 0) return "Spieler";
-
-        List<string> usedNames = new List<string>();
-        foreach (Team team in teams) usedNames.AddRange(team.players);
+        if (availableNames.Count == 0) return "Team";
 
         List<string> unusedNames = new List<string>();
         foreach (string name in availableNames)
         {
-            if (!usedNames.Contains(name)) unusedNames.Add(name);
+            if (!teamNames.Contains(name))
+            {
+                unusedNames.Add(name);
+            }
         }
 
         if (unusedNames.Count == 0)
         {
-            return availableNames[UnityEngine.Random.Range(0, availableNames.Count)] + " " + (usedNames.Count + 1);
+            return availableNames[UnityEngine.Random.Range(0, availableNames.Count)] + " " + (teamNames.Count + 1);
         }
 
         return unusedNames[UnityEngine.Random.Range(0, unusedNames.Count)];
@@ -110,85 +142,22 @@ public class QuizSetupManager : MonoBehaviour
 
         currentPrefabIndex = 0;
 
-        for (int t = 0; t < teams.Count; t++)
+        for (int i = 0; i < teamNames.Count; i++)
         {
-            CreateTeamHeader(t);
-
-            for (int p = 0; p < teams[t].players.Count; p++)
-            {
-                CreatePlayerRow(t, p, teams[t].players[p], false);
-            }
-
-            CreatePlayerRow(t, teams[t].players.Count, GetRandomName(), true);
+            CreateTeamRow(i, teamNames[i], false);
         }
 
-        CreateAddTeamRow();
+        CreateTeamRow(teamNames.Count, GetRandomName(), true);
+
         UpdateStartButton();
     }
 
-    void CreateTeamHeader(int teamIndex)
-    {
-        GameObject header = new GameObject($"TeamHeader{teamIndex}", typeof(RectTransform));
-        header.transform.SetParent(playerContainer, false);
-        LayoutElement element = header.AddComponent<LayoutElement>();
-        element.preferredHeight = 70f;
-
-        TextMeshProUGUI label = UiFactory.CreateText("Label", header.transform,
-            teams[teamIndex].name, 44, HeaderColor, TextAlignmentOptions.Left);
-        label.fontStyle = FontStyles.Bold;
-        label.raycastTarget = false;
-        UiFactory.Stretch(label.rectTransform, 20f, 0f);
-
-        // Teams beyond the required two can be removed via a small X next to the header.
-        if (teams.Count > 2)
-        {
-            Button remove = UiFactory.CreateButton("RemoveTeam", header.transform, "X", 32,
-                Color.white, IconGrayColor);
-            RectTransform removeRect = (RectTransform)remove.transform;
-            UiFactory.Place(removeRect, new Vector2(1f, 0.5f), new Vector2(-10f, 0f), new Vector2(60f, 60f));
-            int index = teamIndex;
-            remove.onClick.AddListener(() =>
-            {
-                teams.RemoveAt(index);
-                RenameTeams();
-                RefreshUI();
-            });
-        }
-    }
-
-    void RenameTeams()
-    {
-        for (int i = 0; i < teams.Count; i++)
-        {
-            teams[i].name = $"Team {i + 1}";
-        }
-    }
-
-    void CreateAddTeamRow()
-    {
-        GameObject row = new GameObject("AddTeamRow", typeof(RectTransform));
-        row.transform.SetParent(playerContainer, false);
-        LayoutElement element = row.AddComponent<LayoutElement>();
-        element.preferredHeight = 90f;
-
-        Button addTeam = UiFactory.CreateButton("AddTeam", row.transform, "+ Team hinzufügen", 34,
-            Color.white, HeaderColor);
-        RectTransform rect = (RectTransform)addTeam.transform;
-        UiFactory.Place(rect, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(420f, 80f));
-        addTeam.onClick.AddListener(() =>
-        {
-            teams.Add(new Team($"Team {teams.Count + 1}"));
-            RefreshUI();
-        });
-    }
-
-    void CreatePlayerRow(int teamIndex, int playerIndex, string playerName, bool isEmpty)
+    void CreateTeamRow(int index, string teamName, bool isEmpty)
     {
         GameObject prefab = GetNextPlayerRowPrefab();
         if (prefab == null) return;
 
         GameObject newRow = Instantiate(prefab, playerContainer);
-        Team team = teams[teamIndex];
 
         TMP_InputField input = newRow.GetComponentInChildren<TMP_InputField>();
         if (input == null)
@@ -236,7 +205,7 @@ public class QuizSetupManager : MonoBehaviour
             return;
         }
 
-        input.text = playerName;
+        input.text = teamName;
         input.interactable = isEmpty;
 
         if (isEmpty)
@@ -246,7 +215,7 @@ public class QuizSetupManager : MonoBehaviour
 
             if (input.placeholder != null && input.placeholder.GetComponent<TextMeshProUGUI>() != null)
             {
-                input.placeholder.GetComponent<TextMeshProUGUI>().text = "Name eingeben...";
+                input.placeholder.GetComponent<TextMeshProUGUI>().text = "Teamname eingeben...";
             }
 
             plusButton.onClick.AddListener(() =>
@@ -254,7 +223,8 @@ public class QuizSetupManager : MonoBehaviour
                 string name = input.text.Trim();
                 if (!string.IsNullOrEmpty(name))
                 {
-                    team.players.Add(name);
+                    teamNames.Add(name);
+                    SaveTeams();
                     RefreshUI();
                 }
             });
@@ -266,7 +236,8 @@ public class QuizSetupManager : MonoBehaviour
                     string name = value.Trim();
                     if (!string.IsNullOrEmpty(name))
                     {
-                        team.players.Add(name);
+                        teamNames.Add(name);
+                        SaveTeams();
                         RefreshUI();
                     }
                 }
@@ -279,7 +250,8 @@ public class QuizSetupManager : MonoBehaviour
 
             minusButton.onClick.AddListener(() =>
             {
-                team.players.RemoveAt(playerIndex);
+                teamNames.RemoveAt(index);
+                SaveTeams();
                 RefreshUI();
             });
         }
@@ -287,25 +259,22 @@ public class QuizSetupManager : MonoBehaviour
 
     void UpdateStartButton()
     {
-        bool enoughTeams = teams.Count >= 2;
-        bool allTeamsHavePlayers = true;
-        foreach (Team team in teams)
-        {
-            if (team.players.Count == 0) allTeamsHavePlayers = false;
-        }
-
-        startGameButton.interactable = enoughTeams && allTeamsHavePlayers;
-        TextMeshProUGUI label = startGameButton.GetComponentInChildren<TextMeshProUGUI>();
-        if (!enoughTeams) label.text = "Mindestens 2 Teams";
-        else if (!allTeamsHavePlayers) label.text = "Jedes Team braucht Spieler";
-        else label.text = $"Quiz starten ({teams.Count} Teams)";
+        startGameButton.interactable = teamNames.Count >= 2;
+        startGameButton.GetComponentInChildren<TextMeshProUGUI>().text =
+            teamNames.Count >= 2 ? $"Quiz starten ({teamNames.Count} Teams)" : "Mindestens 2 Teams";
     }
 
     public void StartGame()
     {
-        if (!startGameButton.interactable) return;
+        if (teamNames.Count < 2) return;
 
-        QuizSession.teams = new List<Team>(teams);
+        List<Team> teams = new List<Team>();
+        foreach (string name in teamNames)
+        {
+            teams.Add(new Team(name));
+        }
+
+        QuizSession.teams = teams;
         NavigationSceneManager.instance.LoadScene("QuizScene");
     }
 

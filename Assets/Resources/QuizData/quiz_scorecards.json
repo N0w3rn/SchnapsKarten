@@ -4,7 +4,7 @@
     { "text": "{LAST_TEAM} liegt hinten - alle aus dem Team trinken {LEADING_TEAM_SCORE} Schlücke!" },
     { "text": "{LEADING_TEAM} führt! Alle anderen Teams trinken 3 Schlücke auf euren Erfolg." },
     { "text": "Zwischenstand-Check! {CURRENT_TEAM} hat {CURRENT_TEAM_SCORE} Punkte. Liegt ihr über {OTHER_TEAM} ({OTHER_TEAM_SCORE} Punkte)? Wenn nicht: 3 Schlücke!" },
-    { "text": "{TEAM_PLAYER} aus {CURRENT_TEAM} trinkt stellvertretend für das ganze Team 2 Schlücke!" },
+    { "text": "{CURRENT_TEAM} wählt ein Mitglied, das stellvertretend für das ganze Team 2 Schlücke trinkt!" },
     { "text": "Alle Teams trinken so viele Schlücke, wie das führende Team {LEADING_TEAM} Punkte hat - außer {LEADING_TEAM} selbst!" },
     { "text": "{LAST_TEAM} darf {LEADING_TEAM_SCORE} Schlücke an andere Teams verteilen - Underdog-Bonus!" },
     { "text": "{OTHER_TEAM} verteilt seine Punktzahl ({OTHER_TEAM_SCORE} Schlücke) beliebig auf die anderen Teams!" },

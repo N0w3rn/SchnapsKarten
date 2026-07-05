@@ -185,9 +185,20 @@ public class QuizSceneManager : MonoBehaviour
         UiFactory.Place((RectTransform)scoreButton.transform, new Vector2(1f, 1f), new Vector2(-25f, -25f), new Vector2(230f, 80f));
         scoreButton.onClick.AddListener(OpenScoreboard);
 
-        Button menuButton = UiFactory.CreateButton("MenuButton", gameRoot.transform, "X", 32,
-            DarkTealColor, Color.white);
-        UiFactory.Place((RectTransform)menuButton.transform, new Vector2(0f, 1f), new Vector2(25f, -25f), new Vector2(80f, 80f));
+        // Back-to-menu arrow, same graphic as the setup scenes (flipped to point left).
+        Sprite arrowSprite = Resources.Load<Sprite>("QuizImages/arrow2");
+        GameObject menuObj = new GameObject("MenuButton", typeof(RectTransform));
+        menuObj.transform.SetParent(gameRoot.transform, false);
+        Image menuImage = menuObj.AddComponent<Image>();
+        menuImage.sprite = arrowSprite;
+        menuImage.preserveAspect = true;
+        Button menuButton = menuObj.AddComponent<Button>();
+        menuButton.targetGraphic = menuImage;
+        RectTransform menuRect = (RectTransform)menuObj.transform;
+        UiFactory.Place(menuRect, new Vector2(0f, 1f), new Vector2(65f, -65f), new Vector2(80f, 80f));
+        // Center pivot so the horizontal mirror flip keeps the button in place.
+        menuRect.pivot = new Vector2(0.5f, 0.5f);
+        menuRect.localScale = new Vector3(-1f, 1f, 1f);
         menuButton.onClick.AddListener(BackToMenu);
 
         ScrollRect endScroll;
@@ -486,10 +497,6 @@ public class QuizSceneManager : MonoBehaviour
         }
         Team other = others.Count > 0 ? others[Random.Range(0, others.Count)] : current;
 
-        string player = current.players.Count > 0
-            ? current.players[Random.Range(0, current.players.Count)]
-            : current.name;
-
         return text
             .Replace("{CURRENT_TEAM}", current.name)
             .Replace("{CURRENT_TEAM_SCORE}", current.score.ToString())
@@ -498,8 +505,7 @@ public class QuizSceneManager : MonoBehaviour
             .Replace("{LEADING_TEAM}", leading.name)
             .Replace("{LEADING_TEAM_SCORE}", leading.score.ToString())
             .Replace("{LAST_TEAM}", last.name)
-            .Replace("{LAST_TEAM_SCORE}", last.score.ToString())
-            .Replace("{TEAM_PLAYER}", player);
+            .Replace("{LAST_TEAM_SCORE}", last.score.ToString());
     }
 
     void BackToMenu()

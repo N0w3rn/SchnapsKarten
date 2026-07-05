@@ -37,7 +37,6 @@ public class ScoreCardsJSON
 public class Team
 {
     public string name;
-    public List<string> players = new List<string>();
     public int score;
 
     public Team(string teamName)
