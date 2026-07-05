@@ -37,7 +37,7 @@ public class OrientationManager : MonoBehaviour
     
     private void OnSceneChanged(string sceneName)
     {
-        if (sceneName == "GameScene")
+        if (sceneName == "GameScene" || sceneName == "QuizScene")
         {
             SetLandscape();
         }

@@ -1,0 +1,106 @@
+{
+  "categories": [
+    {
+      "name": "Allgemeinwissen",
+      "imageName": "cat_allgemeinwissen",
+      "isAction": false,
+      "questions": [
+        { "question": "Wie viele Bundesländer hat Deutschland?", "answer": "16" },
+        { "question": "Wie heißt die Hauptstadt von Australien?", "answer": "Canberra" },
+        { "question": "Wie viele Herzen hat ein Oktopus?", "answer": "3" },
+        { "question": "In welchem Jahr fiel die Berliner Mauer?", "answer": "1989" },
+        { "question": "Wie viele Zeitzonen hat Russland?", "answer": "11" },
+        { "question": "Welches ist das kleinste Land der Welt?", "answer": "Vatikanstadt" },
+        { "question": "Wie viele Saiten hat eine klassische Gitarre?", "answer": "6" },
+        { "question": "Welches chemische Element hat das Symbol 'Au'?", "answer": "Gold" },
+        { "question": "Wie viele Minuten hat ein Fußballspiel (reguläre Spielzeit)?", "answer": "90" },
+        { "question": "Welcher Planet ist der Sonne am nächsten?", "answer": "Merkur" }
+      ]
+    },
+    {
+      "name": "Essen & Trinken",
+      "imageName": "cat_essen_trinken",
+      "isAction": false,
+      "questions": [
+        { "question": "Aus welchem Land kommt Tequila?", "answer": "Mexiko" },
+        { "question": "Was ist die Hauptzutat von Guacamole?", "answer": "Avocado" },
+        { "question": "Wie viel Prozent Alkohol hat Bier ungefähr (normales Pils)?", "answer": "Ca. 4,8-5 %" },
+        { "question": "Aus welchem Getreide wird klassischer Whisky in Schottland hauptsächlich gemacht?", "answer": "Gerste" },
+        { "question": "Welche Frucht ist die Grundlage von Wein?", "answer": "Traube" },
+        { "question": "Was ist in einem Mojito außer Rum, Zucker, Limette und Soda?", "answer": "Minze" },
+        { "question": "Welches Land trinkt pro Kopf am meisten Bier?", "answer": "Tschechien" },
+        { "question": "Woraus wird Sake gemacht?", "answer": "Reis" },
+        { "question": "Wie heißt das japanische Gericht aus rohem Fisch auf Reis?", "answer": "Sushi (genauer: Nigiri)" },
+        { "question": "Welche Zutat macht Brot fluffig?", "answer": "Hefe" }
+      ]
+    },
+    {
+      "name": "Musik & Party",
+      "imageName": "cat_musik",
+      "isAction": false,
+      "questions": [
+        { "question": "Wie viele Mitglieder hatten die Beatles?", "answer": "4" },
+        { "question": "Welcher DJ hat den Song 'Levels' gemacht?", "answer": "Avicii" },
+        { "question": "Aus welchem Land kommt ABBA?", "answer": "Schweden" },
+        { "question": "Wer singt 'Bohemian Rhapsody'?", "answer": "Queen (Freddie Mercury)" },
+        { "question": "Welches Instrument hat 88 Tasten?", "answer": "Klavier" },
+        { "question": "Wie heißt der King of Pop?", "answer": "Michael Jackson" },
+        { "question": "Welche deutsche Band singt 'Du Hast'?", "answer": "Rammstein" },
+        { "question": "In welcher Stadt findet das Oktoberfest statt?", "answer": "München" },
+        { "question": "Wer singt 'Atemlos durch die Nacht'?", "answer": "Helene Fischer" },
+        { "question": "Wie heißt das größte Musikfestival Deutschlands (Rock)?", "answer": "Rock am Ring" }
+      ]
+    },
+    {
+      "name": "Film & Serien",
+      "imageName": "cat_film",
+      "isAction": false,
+      "questions": [
+        { "question": "Wie heißt der Zauberer mit der Blitznarbe?", "answer": "Harry Potter" },
+        { "question": "In welcher Serie geht es um Walter White?", "answer": "Breaking Bad" },
+        { "question": "Wie heißt das Schiff aus dem Film mit Leonardo DiCaprio und Kate Winslet?", "answer": "Titanic" },
+        { "question": "Welcher Schauspieler spielt Iron Man?", "answer": "Robert Downey Jr." },
+        { "question": "Wie viele Herr-der-Ringe-Filme gibt es (Original-Trilogie)?", "answer": "3" },
+        { "question": "Wie heißt der gelbe Schwamm, der unter dem Meer lebt?", "answer": "SpongeBob Schwammkopf" },
+        { "question": "In welchem Film sagt man 'Ich bin dein Vater'?", "answer": "Star Wars (Das Imperium schlägt zurück)" },
+        { "question": "Wie heißt die Drachenmutter aus Game of Thrones?", "answer": "Daenerys Targaryen" },
+        { "question": "Welcher Film handelt von einem Kind, das alleine zuhause vergessen wird?", "answer": "Kevin - Allein zu Haus" },
+        { "question": "Wie heißt der Straßenrennen-Franchise mit Vin Diesel?", "answer": "Fast & Furious" }
+      ]
+    },
+    {
+      "name": "Sport",
+      "imageName": "cat_sport",
+      "isAction": false,
+      "questions": [
+        { "question": "Wie oft war Deutschland Fußball-Weltmeister (Männer)?", "answer": "4 Mal" },
+        { "question": "Wie viele Spieler stehen beim Fußball pro Team auf dem Platz?", "answer": "11" },
+        { "question": "In welcher Sportart gibt es einen 'Ace'?", "answer": "Tennis (auch Volleyball/Badminton)" },
+        { "question": "Wie viele Ringe hat das Olympia-Symbol?", "answer": "5" },
+        { "question": "Welches Land hat die meisten Formel-1-Weltmeister-Titel durch einen einzelnen Fahrer?", "answer": "Deutschland/Großbritannien (Schumacher & Hamilton je 7)" },
+        { "question": "Wie lang ist ein Marathon?", "answer": "42,195 km" },
+        { "question": "In welchem Sport gibt es ein 'Strike'?", "answer": "Bowling (auch Baseball)" },
+        { "question": "Wie viele Punkte gibt ein Touchdown im American Football?", "answer": "6" },
+        { "question": "Welcher Verein hat die meisten Champions-League-Titel?", "answer": "Real Madrid" },
+        { "question": "Wie viele Felder hat ein Schachbrett?", "answer": "64" }
+      ]
+    },
+    {
+      "name": "Aktion",
+      "imageName": "cat_aktion",
+      "isAction": true,
+      "questions": [
+        { "question": "Euer Team muss 30 Sekunden lang gemeinsam auf einem Bein stehen - ohne umzufallen!", "answer": "" },
+        { "question": "Ein Teammitglied muss die anderen Teams 20 Sekunden lang zum Lachen bringen. Lacht jemand, habt ihr es geschafft!", "answer": "" },
+        { "question": "Baut in 60 Sekunden einen Turm aus Dingen, die auf dem Tisch stehen. Mindestens 5 Teile!", "answer": "" },
+        { "question": "Euer Team muss gemeinsam einen Zungenbrecher fehlerfrei aufsagen: 'Fischers Fritz fischt frische Fische'  - 3x hintereinander!", "answer": "" },
+        { "question": "Ein Teammitglied muss 10 Liegestütze schaffen - die anderen dürfen anfeuern!", "answer": "" },
+        { "question": "Singt gemeinsam 30 Sekunden lang ein Lied, das alle anderen erkennen müssen!", "answer": "" },
+        { "question": "Ein Teammitglied muss eine Minute lang wie ein Tier eurer Wahl durchs Zimmer laufen - die anderen Teams müssen das Tier erraten!", "answer": "" },
+        { "question": "Stellt pantomimisch einen Film dar - die anderen Teams haben 60 Sekunden zum Raten. Wird er erraten, gibt's den Punkt!", "answer": "" },
+        { "question": "Jedes Teammitglied muss rückwärts von 20 bis 0 zählen, ohne Fehler!", "answer": "" },
+        { "question": "Euer Team hat 60 Sekunden: Findet 3 Gegenstände im Raum, die mit dem Buchstaben 'S' anfangen!", "answer": "" }
+      ]
+    }
+  ]
+}

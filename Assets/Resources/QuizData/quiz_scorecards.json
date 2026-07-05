@@ -1,0 +1,14 @@
+{
+  "scoreCards": [
+    { "text": "Team {CURRENT_TEAM} muss die Punktzahl von {OTHER_TEAM} trinken ({OTHER_TEAM_SCORE} Schlücke)!" },
+    { "text": "{LAST_TEAM} liegt hinten - alle aus dem Team trinken {LEADING_TEAM_SCORE} Schlücke!" },
+    { "text": "{LEADING_TEAM} führt! Alle anderen Teams trinken 3 Schlücke auf euren Erfolg." },
+    { "text": "Zwischenstand-Check! {CURRENT_TEAM} hat {CURRENT_TEAM_SCORE} Punkte. Liegt ihr über {OTHER_TEAM} ({OTHER_TEAM_SCORE} Punkte)? Wenn nicht: 3 Schlücke!" },
+    { "text": "{TEAM_PLAYER} aus Team {CURRENT_TEAM} trinkt stellvertretend für das ganze Team 2 Schlücke!" },
+    { "text": "Alle Teams trinken so viele Schlücke, wie das führende Team {LEADING_TEAM} Punkte hat - außer {LEADING_TEAM} selbst!" },
+    { "text": "{LAST_TEAM} darf {LEADING_TEAM_SCORE} Schlücke an andere Teams verteilen - Underdog-Bonus!" },
+    { "text": "Team {OTHER_TEAM} verteilt seine Punktzahl ({OTHER_TEAM_SCORE} Schlücke) beliebig auf die anderen Teams!" },
+    { "text": "Aufholjagd! {LAST_TEAM} trinkt die Differenz zum Erstplatzierten: {LEADING_TEAM_SCORE} minus {LAST_TEAM_SCORE} Schlücke." },
+    { "text": "Prost-Runde! Jedes Team trinkt so viele Schlücke wie es Punkte hat. {LEADING_TEAM}, ihr habt es euch verdient!" }
+  ]
+}
