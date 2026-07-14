@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
+using System.Collections;
 using System.Collections.Generic;
 
 // Quiz mode: teams answer questions from JSON-driven categories, points per team,
@@ -64,8 +65,11 @@ public class QuizSceneManager : MonoBehaviour
     private Image backgroundImage;
     private GameObject gameRoot;
     private TextMeshProUGUI headerText;
+    private RectTransform headerScrim;
     private TextMeshProUGUI bodyText;
     private Image categoryImage;
+    private RectTransform categoryImageContainerRect;
+    private RectTransform tapHintScrim;
     private Button answerButtonA;
     private Button answerButtonB;
     private TextMeshProUGUI tapHintText;
@@ -151,17 +155,37 @@ public class QuizSceneManager : MonoBehaviour
         gameRoot.transform.SetParent(canvas, false);
         UiFactory.Stretch((RectTransform)gameRoot.transform);
 
+        // Full-bleed category image: a masked container clips an oversized, aspect-correct
+        // image so it covers the whole screen without letterboxing or distortion.
+        GameObject imageContainerObj = new GameObject("CategoryImageContainer", typeof(RectTransform));
+        imageContainerObj.transform.SetParent(gameRoot.transform, false);
+        categoryImageContainerRect = (RectTransform)imageContainerObj.transform;
+        UiFactory.Stretch(categoryImageContainerRect);
+        imageContainerObj.AddComponent<RectMask2D>();
+
+        GameObject imageObj = new GameObject("CategoryImage", typeof(RectTransform));
+        imageObj.transform.SetParent(imageContainerObj.transform, false);
+        categoryImage = imageObj.AddComponent<Image>();
+        categoryImage.preserveAspect = false;
+        categoryImage.raycastTarget = false;
+        RectTransform imageRect = (RectTransform)imageObj.transform;
+        imageRect.anchorMin = imageRect.anchorMax = new Vector2(0.5f, 0.5f);
+        imageRect.pivot = new Vector2(0.5f, 0.5f);
+
         headerText = UiFactory.CreateText("Header", gameRoot.transform, "", 48, Color.white);
         headerText.raycastTarget = false;
         headerText.fontStyle = FontStyles.Bold;
         UiFactory.Place(headerText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -25f), new Vector2(1300f, 70f));
 
-        GameObject imageObj = new GameObject("CategoryImage", typeof(RectTransform));
-        imageObj.transform.SetParent(gameRoot.transform, false);
-        categoryImage = imageObj.AddComponent<Image>();
-        categoryImage.preserveAspect = true;
-        categoryImage.raycastTarget = false;
-        UiFactory.Place((RectTransform)imageObj.transform, new Vector2(0.5f, 0.5f), new Vector2(0f, 0f), new Vector2(900f, 620f));
+        // Dark scrim bars keep the header/tap-hint text legible over an arbitrary photo.
+        headerScrim = UiFactory.CreatePanel("HeaderScrim", gameRoot.transform, new Color(0f, 0f, 0f, 0.4f));
+        headerScrim.GetComponent<Image>().raycastTarget = false;
+        headerScrim.anchorMin = new Vector2(0f, 1f);
+        headerScrim.anchorMax = new Vector2(1f, 1f);
+        headerScrim.pivot = new Vector2(0.5f, 1f);
+        headerScrim.anchoredPosition = Vector2.zero;
+        headerScrim.sizeDelta = new Vector2(0f, 130f);
+        headerScrim.SetSiblingIndex(headerText.transform.GetSiblingIndex());
 
         bodyText = UiFactory.CreateText("Body", gameRoot.transform, "", 52, Color.white);
         bodyText.raycastTarget = false;
@@ -175,10 +199,19 @@ public class QuizSceneManager : MonoBehaviour
         UiFactory.Place((RectTransform)answerButtonB.transform, new Vector2(0.5f, 0f), new Vector2(240f, 40f), new Vector2(420f, 110f));
         answerButtonB.onClick.AddListener(() => OnAnswered(false));
 
+        tapHintScrim = UiFactory.CreatePanel("TapHintScrim", gameRoot.transform, new Color(0f, 0f, 0f, 0.4f));
+        tapHintScrim.GetComponent<Image>().raycastTarget = false;
+        tapHintScrim.anchorMin = new Vector2(0f, 0f);
+        tapHintScrim.anchorMax = new Vector2(1f, 0f);
+        tapHintScrim.pivot = new Vector2(0.5f, 0f);
+        tapHintScrim.anchoredPosition = Vector2.zero;
+        tapHintScrim.sizeDelta = new Vector2(0f, 90f);
+
         tapHintText = UiFactory.CreateText("TapHint", gameRoot.transform, "Tippen zum Fortfahren", 28,
             new Color(1f, 1f, 1f, 0.45f));
         tapHintText.raycastTarget = false;
         UiFactory.Place(tapHintText.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 20f), new Vector2(800f, 45f));
+        tapHintScrim.SetSiblingIndex(tapHintText.transform.GetSiblingIndex());
 
         scoreButton = UiFactory.CreateButton("ScoreButton", gameRoot.transform, "Punkte", 32,
             DarkTealColor, Color.white);
@@ -352,6 +385,11 @@ public class QuizSceneManager : MonoBehaviour
         if (image != null)
         {
             categoryImage.sprite = image;
+            FitImageToScreen(categoryImageContainerRect, categoryImage.rectTransform, image);
+            // On the very first category the canvas hasn't finished its initial layout
+            // yet, so the container rect can still be wrong (unscaled screen size).
+            // Re-fit one frame later, when the CanvasScaler has definitely run.
+            StartCoroutine(RefitImageNextFrame(image));
             SetGameElements(showImage: true, body: "", showAnswerButtons: false, showTapHint: true, showEndList: false);
         }
         else
@@ -467,9 +505,50 @@ public class QuizSceneManager : MonoBehaviour
         tapHintText.color = new Color(text.r, text.g, text.b, 0.5f);
     }
 
+    // Compromise between "contain" (whole image visible, but can leave large borders)
+    // and "cover" (fills the screen, but can crop a lot): scale up beyond contain to
+    // fill the screen, but never crop more than ~1/6 of the image on the overflowing
+    // axis - if the aspect ratios differ more than that, a small border remains.
+    const float MaxImageOverfill = 1.3f;
+
+    void FitImageToScreen(RectTransform container, RectTransform image, Sprite sprite)
+    {
+        float containerWidth = container.rect.width;
+        float containerHeight = container.rect.height;
+        if (containerWidth <= 0f || containerHeight <= 0f)
+        {
+            // The very first category is shown in the same frame the canvas is built,
+            // before its first layout pass - the container rect is still 0. Force the
+            // layout so the first image gets sized like all later ones.
+            Canvas.ForceUpdateCanvases();
+            containerWidth = container.rect.width;
+            containerHeight = container.rect.height;
+            if (containerWidth <= 0f || containerHeight <= 0f) return;
+        }
+
+        float spriteWidth = sprite.rect.width;
+        float spriteHeight = sprite.rect.height;
+
+        float containScale = Mathf.Min(containerWidth / spriteWidth, containerHeight / spriteHeight);
+        float coverScale = Mathf.Max(containerWidth / spriteWidth, containerHeight / spriteHeight);
+        float scale = Mathf.Min(coverScale, containScale * MaxImageOverfill);
+
+        image.sizeDelta = new Vector2(spriteWidth * scale, spriteHeight * scale);
+    }
+
+    IEnumerator RefitImageNextFrame(Sprite sprite)
+    {
+        yield return null;
+        if (categoryImage.sprite == sprite && categoryImageContainerRect.gameObject.activeInHierarchy)
+        {
+            FitImageToScreen(categoryImageContainerRect, categoryImage.rectTransform, sprite);
+        }
+    }
+
     void SetGameElements(bool showImage, string body, bool showAnswerButtons, bool showTapHint, bool showEndList)
     {
-        categoryImage.gameObject.SetActive(showImage);
+        categoryImageContainerRect.gameObject.SetActive(showImage);
+        headerScrim.gameObject.SetActive(showImage);
         bodyText.text = body;
         bodyText.fontSize = 52;
         bodyText.fontStyle = FontStyles.Normal;
@@ -477,6 +556,7 @@ public class QuizSceneManager : MonoBehaviour
         answerButtonA.gameObject.SetActive(showAnswerButtons);
         answerButtonB.gameObject.SetActive(showAnswerButtons);
         tapHintText.gameObject.SetActive(showTapHint);
+        tapHintScrim.gameObject.SetActive(showTapHint && showImage);
         endListContainer.parent.gameObject.SetActive(showEndList);
     }
 

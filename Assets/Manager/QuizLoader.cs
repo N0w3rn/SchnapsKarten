@@ -51,6 +51,10 @@ public static class QuizLoader
     public static Sprite LoadCategoryImage(string imageName)
     {
         if (string.IsNullOrEmpty(imageName)) return null;
-        return Resources.Load<Sprite>($"QuizImages/{imageName}");
+
+        Sprite sprite = Resources.Load<Sprite>($"QuizImages/{imageName}");
+        if (sprite == null) sprite = Resources.Load<Sprite>($"CardImages/{imageName}");
+        if (sprite == null) Debug.LogWarning($"QuizLoader: category image '{imageName}' not found in Resources/QuizImages or Resources/CardImages.");
+        return sprite;
     }
 }
