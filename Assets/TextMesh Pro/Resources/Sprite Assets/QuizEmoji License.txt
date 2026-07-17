@@ -1,0 +1,13 @@
+QuizEmoji.png / QuizEmoji.asset
+
+Emoji artwork sourced from the Noto Emoji project (Google):
+https://github.com/googlefonts/noto-emoji
+
+Licensed under the Apache License, Version 2.0:
+https://www.apache.org/licenses/LICENSE-2.0
+
+Copyright 2013 Google Inc. All Rights Reserved.
+
+Built as a TextMeshPro Sprite Asset covering the emoji Unicode
+codepoints actually used in Assets/Resources/QuizData/*.json,
+registered as an Emoji Fallback Text Asset in TMP Settings.
