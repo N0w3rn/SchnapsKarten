@@ -64,6 +64,10 @@ sysinfo.txt
 # Crashlytics generated file
 crashlytics-build.properties
 
+# Unity license activation files
+*.alf
+*.ulf
+
 # Packed Addressables
 /[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/*/*.bin*
 
