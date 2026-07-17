@@ -544,47 +544,6 @@ public class GameSceneManager : MonoBehaviour
         }
     }
 
-    private Sprite roundedBackdropSprite;
-
-    Sprite GetRoundedBackdropSprite()
-    {
-        if (roundedBackdropSprite != null) return roundedBackdropSprite;
-
-        const int size = 64;
-        const int radius = 20;
-        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        tex.wrapMode = TextureWrapMode.Clamp;
-        Color[] pixels = new Color[size * size];
-
-        for (int y = 0; y < size; y++)
-        {
-            for (int x = 0; x < size; x++)
-            {
-                float cx = -1f, cy = -1f;
-                if (x < radius && y < radius) { cx = radius; cy = radius; }
-                else if (x >= size - radius && y < radius) { cx = size - radius - 1; cy = radius; }
-                else if (x < radius && y >= size - radius) { cx = radius; cy = size - radius - 1; }
-                else if (x >= size - radius && y >= size - radius) { cx = size - radius - 1; cy = size - radius - 1; }
-
-                float alpha = 1f;
-                if (cx >= 0f)
-                {
-                    float dist = Vector2.Distance(new Vector2(x, y), new Vector2(cx, cy));
-                    alpha = Mathf.Clamp01(radius - dist + 0.5f);
-                }
-
-                pixels[y * size + x] = new Color(1f, 1f, 1f, alpha);
-            }
-        }
-
-        tex.SetPixels(pixels);
-        tex.Apply();
-
-        roundedBackdropSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f, 0,
-            SpriteMeshType.FullRect, new Vector4(radius, radius, radius, radius));
-        return roundedBackdropSprite;
-    }
-
     void EnsureTitleBackdrop()
     {
         if (titleBackdrop != null || cardTitle == null) return;
@@ -593,7 +552,7 @@ public class GameSceneManager : MonoBehaviour
         backdropObj.transform.SetParent(cardTitle.transform.parent, false);
 
         titleBackdrop = backdropObj.AddComponent<Image>();
-        titleBackdrop.sprite = GetRoundedBackdropSprite();
+        titleBackdrop.sprite = UiFactory.GetRoundedSprite();
         titleBackdrop.type = Image.Type.Sliced;
         titleBackdrop.color = new Color(1f, 1f, 1f, 0.8f);
 

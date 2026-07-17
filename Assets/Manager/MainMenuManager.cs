@@ -26,7 +26,15 @@ public class MainMenuManager : MonoBehaviour
     void StartGameMode(GameModeEnum gameMode)
     {
         GameModeManager.instance.setGameMode(gameMode);
-        
-        NavigationSceneManager.instance.LoadScene("PlayerSetup");
+
+        // Quiz has its own team setup scene; the other modes share PlayerSetup.
+        if (gameMode == GameModeEnum.Quiz)
+        {
+            NavigationSceneManager.instance.LoadScene("QuizSetup");
+        }
+        else
+        {
+            NavigationSceneManager.instance.LoadScene("PlayerSetup");
+        }
     }
 }

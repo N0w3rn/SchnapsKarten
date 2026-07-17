@@ -17,5 +17,10 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/GameScene.unity
     guid: 71ffeb0a3d5debc4d86b321fe82f498d
+  - enabled: 1
+    path: Assets/Scenes/QuizScene.unity
+    guid: acfebd2d355ea2c4fb9a1ab4240a5157
+  - enabled: 1
+    path: Assets/Scenes/QuizSetup.unity
+    guid: bc6eca32efcf3d6409c491223869fbf8
   m_configObjects: {}
-  m_UseUCBPForAssetBundles: 0
